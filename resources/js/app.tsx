@@ -5,6 +5,7 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import AdminLayout from '@/layouts/admin/admin-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import PublicLayout from '@/layouts/public-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -31,6 +32,8 @@ createInertiaApp({
                 return [AppLayout, SettingsLayout];
             case name.startsWith('disaster/'):
                 return AdminLayout;
+            case name.startsWith('public/'):
+                return PublicLayout;
             default:
                 return AppLayout;
         }
