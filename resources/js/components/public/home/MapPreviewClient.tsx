@@ -12,7 +12,8 @@ export default function MapPreviewClient() {
         <MapContainer
             center={[-6.42, 108.20]}
             zoom={10}
-            className="h-full w-full"
+            className="absolute inset-0 z-0"
+            style={{ height: '100%', width: '100%' }}
             zoomControl={false}
             scrollWheelZoom={false}
             dragging={false}

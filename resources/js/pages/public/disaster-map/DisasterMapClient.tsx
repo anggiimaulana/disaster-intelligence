@@ -20,7 +20,8 @@ export default function DisasterMapClient({ filteredMarkers }: DisasterMapClient
         <MapContainer
             center={INDRAMAYU_CENTER}
             zoom={INDRAMAYU_ZOOM}
-            className="h-full w-full z-0"
+            className="absolute inset-0 z-0"
+            style={{ height: '100%', width: '100%' }}
             zoomControl={true}
             scrollWheelZoom={true}
         >

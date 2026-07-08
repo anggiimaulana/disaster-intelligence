@@ -101,12 +101,12 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
                                 showControls ? 'block' : 'hidden lg:flex'
                             }`}
                         >
-                            <div className="bg-white rounded-[24px] p-6 shadow-sm border border-premium-border">
+                            <div className="bg-white rounded-[24px] p-6 shadow-sm border border-premium-border text-center">
                                 <h3 className="text-sm font-bold text-premium-heading mb-4 uppercase tracking-wider">
                                     Filter Kategori
                                 </h3>
                                 <Select value={selectedType} onValueChange={setSelectedType}>
-                                    <SelectTrigger className="h-11 rounded-[12px] border-premium-border bg-premium-bg text-sm font-medium text-premium-heading focus:ring-premium-blue-accent">
+                                    <SelectTrigger className="w-full h-11 rounded-[12px] border-premium-border bg-premium-bg text-sm font-medium text-premium-heading focus:ring-premium-blue-accent">
                                         <SelectValue placeholder="Semua Jenis" />
                                     </SelectTrigger>
                                     <SelectContent>
