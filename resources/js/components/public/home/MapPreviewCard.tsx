@@ -1,21 +1,23 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, MapPin } from 'lucide-react';
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { disasterMap } from '@/routes/public';
 import { MOCK_MARKERS } from '@/data/mock/public/alerts';
+
+const MapPreviewClient = lazy(() => import('./MapPreviewClient'));
 
 interface MapPreviewCardProps {
     markerCount: number;
 }
 
-function getMarkerColor(type: string): string {
-    const map: Record<string, string> = { BANJIR: '#3B82F6', LONGSOR: '#F59E0B', KEBAKARAN: '#EF4444', ANGIN_KENCANG: '#22C55E', LAINNYA: '#8B5CF6' };
-    return map[type] ?? '#94A3B8';
-}
-
 export default function MapPreviewCard({ markerCount }: MapPreviewCardProps) {
+    const [isMounted, setIsMounted] = useState(false);
+    
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     return (
         <section className="bg-[#F3F6FC] py-12 lg:py-16">
             <div className="mx-auto max-w-[1240px] px-4 lg:px-6">
@@ -48,38 +50,11 @@ export default function MapPreviewCard({ markerCount }: MapPreviewCardProps) {
                             </Button>
                         </div>
                         <div className="relative h-[240px] lg:h-[320px] w-full bg-[#E8EDF5]">
-                            <MapContainer
-                                center={[-6.42, 108.20]}
-                                zoom={10}
-                                className="h-full w-full"
-                                zoomControl={false}
-                                scrollWheelZoom={false}
-                                dragging={false}
-                                touchZoom={false}
-                                doubleClickZoom={false}
-                                keyboard={false}
-                                attributionControl={false}
-                            >
-                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                {MOCK_MARKERS.map((marker) => (
-                                    <CircleMarker
-                                        key={marker.id}
-                                        center={[marker.lat, marker.lng]}
-                                        radius={8}
-                                        fillColor={getMarkerColor(marker.type)}
-                                        fillOpacity={0.85}
-                                        color="#ffffff"
-                                        weight={2}
-                                    >
-                                        <Tooltip direction="top" offset={[0, -10]} opacity={0.95}>
-                                            <div className="min-w-[120px] p-1">
-                                                <p className="text-xs font-bold">{marker.type.replace(/_/g, ' ')}</p>
-                                                <p className="text-[11px] text-gray-600">Kec. {marker.district}</p>
-                                            </div>
-                                        </Tooltip>
-                                    </CircleMarker>
-                                ))}
-                            </MapContainer>
+                            {isMounted && (
+                                <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-sm text-gray-500">Memuat peta...</div>}>
+                                    <MapPreviewClient />
+                                </Suspense>
+                            )}
                         </div>
                     </div>
                 </div>

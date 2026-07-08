@@ -1,11 +1,11 @@
-import { useState, type FormEvent } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { ArrowLeft, MapPin, Phone, Mail, Clock, MessageCircle, Send, Building } from 'lucide-react';
+import { useState, useEffect, lazy, Suspense, type FormEvent } from 'react';
+import { Head } from '@inertiajs/react';
+import { MapPin, Phone, Mail, Clock, MessageCircle, Send, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { home } from '@/routes';
+import { EthicalHero } from '@/components/ui/hero-ethical';
 import type { PageProps } from '@/types';
+
+const ContactMapClient = lazy(() => import('./ContactMapClient'));
 
 interface ContactPageProps extends PageProps {
     isSimulation?: boolean;
@@ -26,6 +26,11 @@ export default function ContactPage({}: ContactPageProps) {
     const [email, setEmail] = useState('');
     const [pesan, setPesan] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -35,163 +40,131 @@ export default function ContactPage({}: ContactPageProps) {
     return (
         <>
             <Head title="Kontak - Disaster Intelligence" />
-            <div>
-            <div className="relative bg-gradient-to-br from-[#001a33] via-[#00264d] to-[#003366] overflow-hidden">
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-blue-400 blur-3xl" />
-                    <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-cyan-400 blur-3xl" />
-                </div>
-                <div className="relative mx-auto max-w-[1240px] px-4 lg:px-6 py-12 lg:py-16">
-                    <Link
-                        href={home()}
-                        className="inline-flex items-center gap-1 text-sm text-blue-300 hover:text-blue-200 mb-4"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Kembali ke Beranda
-                    </Link>
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                            <Building className="h-5 w-5 text-blue-400" />
-                        </div>
-                        <span className="text-sm font-medium text-blue-300">Kontak Resmi</span>
-                    </div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-white mb-3">Hubungi Kami</h1>
-                    <p className="text-sm text-blue-200/80 max-w-2xl leading-relaxed">
-                        Hubungi BPBD Kabupaten Indramayu melalui kanal komunikasi resmi yang tersedia.
-                        Kami siap membantu 24 jam untuk tanggap darurat bencana.
-                    </p>
-                </div>
-            </div>
-
-            <div className="mx-auto max-w-[1240px] px-4 lg:px-6 py-10 lg:py-14">
-                <div className="grid lg:grid-cols-2 gap-8 mb-10">
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-bold text-[#1F2937] mb-3">Informasi Kontak</h2>
-                        {CONTACT_CHANNELS.map(({ icon: Icon, label, value, href }) => (
-                            <div
-                                key={label}
-                                className="flex items-start gap-4 rounded-xl border border-[#E5E7EB] bg-white p-5 hover:shadow-sm transition-shadow"
-                            >
-                                <div className="shrink-0 w-10 h-10 rounded-xl bg-[#E0E7FF] flex items-center justify-center">
-                                    <Icon className="h-5 w-5 text-[#003366]" />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-medium text-[#6B7280] mb-0.5">{label}</p>
-                                    {href ? (
-                                        <a
-                                            href={href}
-                                            target={href.startsWith('http') ? '_blank' : undefined}
-                                            rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                                            className="text-sm font-medium text-[#003366] hover:text-[#002B5C] transition-colors"
-                                        >
-                                            {value}
-                                        </a>
-                                    ) : (
-                                        <p className="text-sm font-medium text-[#1F2937]">{value}</p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div>
-                        <h2 className="text-lg font-bold text-[#1F2937] mb-3">Kirim Pesan</h2>
-                        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 lg:p-8">
-                            {submitted ? (
-                                <div className="text-center py-8">
-                                    <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                                        <Send className="h-7 w-7 text-green-600" />
+            <EthicalHero
+                kicker="Kontak Resmi"
+                title={
+                    <>
+                        Hubungi{' '}
+                        <span className="text-premium-blue-accent">BPBD</span> Indramayu
+                    </>
+                }
+                subtitle="Kanal komunikasi resmi BPBD Kabupaten Indramayu. Tim kami siaga 24 jam untuk tanggap darurat bencana."
+            />
+            <div className="bg-premium-bg min-h-screen pb-20">
+                <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10 mt-4 lg:mt-8 relative z-20">
+                    <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 mb-16">
+                        
+                        {/* LEFT COLUMN: Contact Info */}
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-premium-heading mb-6 font-heading">Informasi Kontak</h2>
+                            <div className="grid gap-4">
+                                {CONTACT_CHANNELS.map(({ icon: Icon, label, value, href }) => (
+                                    <div
+                                        key={label}
+                                        className="flex items-center gap-5 rounded-[24px] border border-premium-border bg-white p-6 shadow-sm hover:shadow-md transition-shadow group"
+                                    >
+                                        <div className="shrink-0 w-12 h-12 rounded-[16px] bg-premium-bg flex items-center justify-center group-hover:bg-premium-blue-accent/10 transition-colors">
+                                            <Icon className="h-6 w-6 text-premium-navy group-hover:text-premium-blue-accent transition-colors" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-premium-caption mb-1 uppercase tracking-wider">{label}</p>
+                                            {href ? (
+                                                <a
+                                                    href={href}
+                                                    target={href.startsWith('http') ? '_blank' : undefined}
+                                                    rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                                                    className="text-base font-bold text-premium-heading hover:text-premium-blue-accent transition-colors"
+                                                >
+                                                    {value}
+                                                </a>
+                                            ) : (
+                                                <p className="text-base font-bold text-premium-heading">{value}</p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <h3 className="text-base font-bold text-[#1F2937] mb-1">Pesan Terkirim!</h3>
-                                    <p className="text-sm text-[#6B7280]">Tim kami akan membalas pesan Anda segera.</p>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* RIGHT COLUMN: Contact Form */}
+                        <div className="bg-white rounded-[32px] border border-premium-border p-8 lg:p-10 shadow-[0_15px_40px_rgba(15,23,42,0.04)] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-premium-blue-accent/5 rounded-bl-full pointer-events-none"></div>
+                            <h2 className="text-2xl font-bold text-premium-heading mb-8 font-heading">Kirim Pesan</h2>
+                            
+                            {submitted ? (
+                                <div className="text-center py-10 animate-in zoom-in-95 duration-500">
+                                    <div className="w-20 h-20 rounded-full bg-premium-success/10 flex items-center justify-center mx-auto mb-6">
+                                        <CheckCircle2 className="h-10 w-10 text-premium-success" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-premium-heading mb-3 font-heading">Pesan Terkirim!</h3>
+                                    <p className="text-sm text-premium-body leading-relaxed mb-6">Tim kami akan membalas pesan Anda segera melalui email.</p>
+                                    <Button
+                                        onClick={() => setSubmitted(false)}
+                                        variant="outline"
+                                        className="h-12 px-6 rounded-[14px] font-bold text-premium-body hover:bg-premium-bg hover:text-premium-heading transition-colors border-premium-border"
+                                    >
+                                        Kirim Pesan Lain
+                                    </Button>
                                 </div>
                             ) : (
-                                <form onSubmit={handleSubmit} className="space-y-4">
+                                <form onSubmit={handleSubmit} className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-[#1F2937] mb-1.5">Nama</label>
+                                        <label className="block text-sm font-bold text-premium-heading mb-2">Nama Lengkap</label>
                                         <input
                                             type="text"
                                             value={nama}
                                             onChange={(e) => setNama(e.target.value)}
                                             required
-                                            placeholder="Nama lengkap"
-                                            className="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#003366]/20 focus:border-[#003366]"
+                                            placeholder="Masukkan nama Anda"
+                                            className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading placeholder:text-premium-caption focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-[#1F2937] mb-1.5">Email</label>
+                                        <label className="block text-sm font-bold text-premium-heading mb-2">Alamat Email</label>
                                         <input
                                             type="email"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
                                             placeholder="email@contoh.com"
-                                            className="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#003366]/20 focus:border-[#003366]"
+                                            className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading placeholder:text-premium-caption focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-[#1F2937] mb-1.5">Pesan</label>
+                                        <label className="block text-sm font-bold text-premium-heading mb-2">Pesan</label>
                                         <textarea
                                             value={pesan}
                                             onChange={(e) => setPesan(e.target.value)}
                                             required
-                                            rows={4}
-                                            placeholder="Tulis pesan Anda..."
-                                            className="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#003366]/20 focus:border-[#003366] resize-y"
+                                            rows={5}
+                                            placeholder="Tulis pesan atau pertanyaan Anda di sini..."
+                                            className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading placeholder:text-premium-caption focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm resize-y"
                                         />
                                     </div>
-                                    <Button type="submit" className="w-full bg-[#003366] text-white hover:bg-[#002B5C] rounded-xl py-2.5">
-                                        <Send className="h-4 w-4 mr-2" />
+                                    <Button type="submit" className="w-full h-14 bg-gradient-to-r from-premium-navy to-premium-navy-dark hover:opacity-90 text-white rounded-[18px] text-base font-bold shadow-[0_10px_25px_rgba(11,42,82,0.25)] hover:shadow-[0_15px_35px_rgba(11,42,82,0.35)] hover:-translate-y-0.5 transition-all duration-300">
+                                        <Send className="h-5 w-5 mr-2" />
                                         Kirim Pesan
                                     </Button>
                                 </form>
                             )}
                         </div>
-
-                        <div className="mt-4">
-                            <Button
-                                asChild
-                                className="w-full bg-[#25D366] text-white hover:bg-[#1DA851] rounded-xl gap-2 py-2.5"
-                            >
-                                <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
-                                    <MessageCircle className="h-4 w-4" />
-                                    Hubungi via WhatsApp
-                                </a>
-                            </Button>
-                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <h2 className="text-lg font-bold text-[#1F2937] mb-4">Lokasi Kantor BPBD Indramayu</h2>
-                    <div className="rounded-2xl border border-[#E5E7EB] bg-white overflow-hidden">
-                        <div className="h-[300px] lg:h-[400px] w-full">
-                            <MapContainer
-                                center={BPBD_LOCATION}
-                                zoom={15}
-                                className="h-full w-full"
-                                zoomControl={true}
-                                scrollWheelZoom={true}
-                            >
-                                <TileLayer
-                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
-                                <CircleMarker center={BPBD_LOCATION} radius={10} fillColor="#003366" fillOpacity={0.85} color="#ffffff" weight={3}>
-                                    <Popup>
-                                        <div className="text-center">
-                                            <p className="text-sm font-bold text-slate-900">BPBD Kab. Indramayu</p>
-                                            <p className="text-xs text-slate-600">Jl. Letnan Jenderal Soeprapto No. 1</p>
-                                            <p className="text-[11px] text-slate-400">Indramayu, Jawa Barat 45213</p>
-                                        </div>
-                                    </Popup>
-                                </CircleMarker>
-                            </MapContainer>
+                    {/* LOCATION MAP */}
+                    <div>
+                        <h2 className="text-2xl font-bold text-premium-heading mb-8 font-heading">Lokasi Kantor BPBD Indramayu</h2>
+                        <div className="rounded-[32px] border-4 border-white bg-premium-border overflow-hidden shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+                            <div className="h-[400px] lg:h-[500px] w-full relative z-0">
+                                {isMounted && (
+                                    <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-sm text-gray-500">Memuat peta...</div>}>
+                                        <ContactMapClient location={BPBD_LOCATION} />
+                                    </Suspense>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         </>
     );
 }

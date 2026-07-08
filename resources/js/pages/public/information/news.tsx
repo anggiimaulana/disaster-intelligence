@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Calendar, ArrowRight } from 'lucide-react';
+import { EthicalHero } from '@/components/ui/hero-ethical';
 import { information } from '@/routes/public';
 import { newsShow } from '@/routes/public/information';
 import { MOCK_ARTICLES } from '@/data/mock/public/articles';
@@ -13,47 +14,54 @@ export default function NewsPage({ isSimulation }: NewsPageProps) {
     return (
         <>
             <Head title="Berita & Informasi - Disaster Intelligence" />
-            <div className="mx-auto max-w-[1240px] px-4 lg:px-6 py-8 lg:py-12">
-                <Link
-                    href={information()}
-                    className="inline-flex items-center gap-1 text-sm text-[#003366] hover:text-[#002B5C] mb-6"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke Informasi
-                </Link>
+            <EthicalHero
+                kicker="Publikasi"
+                title={
+                    <>
+                        Berita &{' '}
+                        <span className="text-premium-blue-accent">Informasi</span>
+                    </>
+                }
+                subtitle="Update terbaru seputar penanggulangan bencana, kegiatan BPBD, dan informasi penting lainnya di Kabupaten Indramayu."
+            />
 
-                <h1 className="text-xl lg:text-2xl font-bold text-[#1F2937] mb-2">
-                    Berita & Informasi
-                </h1>
-                <p className="text-sm text-[#6B7280] mb-8">
-                    Update terbaru seputar penanggulangan bencana di Kabupaten Indramayu
-                </p>
-
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {MOCK_ARTICLES.map((article) => (
-                        <Link
-                            key={article.id}
-                            href={newsShow({ slug: article.slug })}
-                            className="group rounded-2xl bg-white border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
-                        >
-                            <div className="bg-[#E8EDF5] h-44 overflow-hidden">
-                                <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            </div>
-                            <div className="p-4">
-                                <div className="flex items-center gap-2 text-xs text-[#6B7280] mb-2">
-                                    <Calendar className="h-3 w-3" />
-                                    <span>{new Date(article.publishedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <div className="bg-premium-bg pb-20">
+                <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {MOCK_ARTICLES.map((article) => (
+                            <Link
+                                key={article.id}
+                                href={newsShow({ slug: article.slug })}
+                                className="group flex flex-col rounded-[24px] bg-white border border-premium-border overflow-hidden shadow-[0_10px_30px_rgba(15,23,42,0.04)] hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)] transition-all duration-300 hover:-translate-y-1"
+                            >
+                                <div className="h-52 overflow-hidden relative">
+                                    <div className="absolute inset-0 bg-premium-navy/10 group-hover:bg-transparent transition-colors z-10"></div>
+                                    <img 
+                                        src={article.imageUrl} 
+                                        alt={article.title} 
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
+                                    />
+                                    <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
+                                        <Calendar className="h-3.5 w-3.5 text-premium-blue-accent" />
+                                        <span className="text-[11px] font-bold text-premium-heading">
+                                            {new Date(article.publishedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                        </span>
+                                    </div>
                                 </div>
-                                <h3 className="text-sm font-bold text-[#1F2937] group-hover:text-[#003366] transition-colors line-clamp-2 mb-2">
-                                    {article.title}
-                                </h3>
-                                <p className="text-xs text-[#6B7280] line-clamp-2">{article.excerpt}</p>
-                                <div className="flex items-center gap-1 mt-3 text-xs font-medium text-[#003366]">
-                                    Baca selengkapnya <ArrowRight className="h-3 w-3" />
+                                <div className="p-6 flex flex-col flex-1">
+                                    <h3 className="text-lg font-bold text-premium-heading group-hover:text-premium-blue-accent transition-colors line-clamp-2 mb-3 font-heading leading-snug">
+                                        {article.title}
+                                    </h3>
+                                    <p className="text-sm text-premium-body line-clamp-3 mb-6 flex-1 leading-relaxed">
+                                        {article.excerpt}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-auto pt-4 border-t border-premium-border text-sm font-bold text-premium-blue-accent group-hover:gap-3 transition-all">
+                                        Baca Selengkapnya <ArrowRight className="h-4 w-4" />
+                                    </div>
                                 </div>
-                            </div>
-                        </Link>
-                    ))}
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
         </>

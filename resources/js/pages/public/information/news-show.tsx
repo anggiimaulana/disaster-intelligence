@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, Tag, ArrowRight } from 'lucide-react';
 import { news } from '@/routes/public/information';
 import { newsShow } from '@/routes/public/information';
 import { MOCK_ARTICLES } from '@/data/mock/public/articles';
@@ -12,81 +12,105 @@ interface NewsShowPageProps extends PageProps {
 
 export default function NewsShowPage({ isSimulation, slug }: NewsShowPageProps) {
     const article = MOCK_ARTICLES.find((a) => a.slug === slug) ?? MOCK_ARTICLES[0];
-    const relatedArticles = MOCK_ARTICLES.filter((a) => a.id !== article.id).slice(0, 2);
+    const relatedArticles = MOCK_ARTICLES.filter((a) => a.id !== article.id).slice(0, 3);
 
     return (
         <>
             <Head title={`${article.title} - Disaster Intelligence`} />
-            <div className="mx-auto max-w-[1240px] px-4 lg:px-6 py-8 lg:py-12">
-                <Link
-                    href={news()}
-                    className="inline-flex items-center gap-1 text-sm text-[#003366] hover:text-[#002B5C] mb-6"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke Berita
-                </Link>
+            <div className="bg-premium-bg min-h-screen py-10 lg:py-16">
+                <div className="mx-auto max-w-[1240px] px-6 lg:px-10">
+                    <Link
+                        href={news()}
+                        className="inline-flex items-center gap-2 text-sm font-medium text-premium-body hover:text-premium-blue-hover transition-colors mb-8 group"
+                    >
+                        <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                        Kembali ke Daftar Publikasi
+                    </Link>
 
-                <div className="grid lg:grid-cols-3 gap-8">
-                    <article className="lg:col-span-2">
-                        <div className="bg-[#E8EDF5] h-56 lg:h-72 rounded-2xl overflow-hidden mb-6">
-                            <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
-                        </div>
+                    <div className="grid lg:grid-cols-3 gap-10">
+                        <article className="lg:col-span-2">
+                            {/* Article Header */}
+                            <div className="mb-8">
+                                <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-premium-caption mb-4 uppercase tracking-wider">
+                                    <span className="flex items-center gap-1.5 text-premium-blue-accent bg-premium-blue-accent/10 px-3 py-1 rounded-full">
+                                        <Calendar className="h-3.5 w-3.5" />
+                                        {new Date(article.publishedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </span>
+                                    {article.tags?.map((tag) => (
+                                        <span key={tag} className="flex items-center gap-1 bg-white border border-premium-border px-3 py-1 rounded-full text-premium-body shadow-sm">
+                                            <Tag className="h-3.5 w-3.5" />
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                                <h1 className="text-3xl lg:text-4xl font-bold text-premium-heading mb-6 font-heading leading-tight tracking-tight">
+                                    {article.title}
+                                </h1>
+                            </div>
 
-                        <div className="flex items-center gap-3 text-xs text-[#6B7280] mb-3">
-                            <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {new Date(article.publishedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
-                            </span>
-                            {article.tags.map((tag) => (
-                                <span key={tag} className="flex items-center gap-1 bg-[#F3F4F6] rounded-full px-2 py-0.5">
-                                    <Tag className="h-3 w-3" />
-                                    {tag}
-                                </span>
-                            ))}
-                        </div>
+                            {/* Featured Image */}
+                            <div className="rounded-[32px] overflow-hidden mb-10 shadow-[0_20px_60px_rgba(15,23,42,0.08)] relative group border-4 border-white">
+                                <div className="absolute inset-0 bg-premium-navy/10 z-10 transition-colors group-hover:bg-transparent"></div>
+                                <img 
+                                    src={article.imageUrl} 
+                                    alt={article.title} 
+                                    className="w-full h-[300px] lg:h-[450px] object-cover transition-transform duration-1000 group-hover:scale-105" 
+                                />
+                            </div>
 
-                        <h1 className="text-xl lg:text-2xl font-bold text-[#1F2937] mb-4">
-                            {article.title}
-                        </h1>
-
-                        <div className="prose prose-sm max-w-none text-[#4B5563]">
-                            <p className="text-base leading-relaxed mb-4">{article.excerpt}</p>
-                            <p className="text-base leading-relaxed mb-4">
-                                Memasuki puncak musim hujan, BPBD Kabupaten Indramayu mengimbau
-                                seluruh warga untuk meningkatkan kewaspadaan terhadap potensi bencana
-                                hidrometeorologi seperti banjir, angin kencang, dan tanah longsor.
-                            </p>
-                            <p className="text-base leading-relaxed mb-4">
-                                Berdasarkan data dari BMKG, curah hujan di wilayah Kabupaten Indramayu
-                                diprediksi akan meningkat hingga 40% dalam beberapa pekan ke depan.
-                                Masyarakat diimbau untuk selalu memantau informasi cuaca terkini dan
-                                mengikuti arahan dari petugas BPBD.
-                            </p>
-                            <p className="text-base leading-relaxed">
-                                BPBD telah menyiagakan personel di setiap kecamatan dan membuka posko
-                                siaga bencana 24 jam. Masyarakat yang membutuhkan bantuan darurat
-                                dapat menghubungi call center BPBD di nomor (0234) XXXXX.
-                            </p>
-                        </div>
-                    </article>
-
-                    <aside className="space-y-4">
-                        <h3 className="text-sm font-bold text-[#1F2937]">Berita Terkait</h3>
-                        {relatedArticles.map((related) => (
-                            <Link
-                                key={related.id}
-                                href={newsShow({ slug: related.slug })}
-                                className="block rounded-xl border border-[#E5E7EB] p-4 hover:bg-[#F9FAFB] transition-colors"
-                            >
-                                <p className="text-xs text-[#6B7280] mb-1">
-                                    {new Date(related.publishedAt).toLocaleDateString('id-ID')}
+                            {/* Article Body */}
+                            <div className="prose prose-lg max-w-none text-premium-body font-sans leading-relaxed">
+                                <p className="text-lg leading-relaxed mb-6 font-medium text-premium-heading border-l-4 border-premium-blue-accent pl-6 bg-premium-blue-accent/5 py-4 rounded-r-xl">
+                                    {article.excerpt}
                                 </p>
-                                <p className="text-sm font-medium text-[#1F2937] line-clamp-2">
-                                    {related.title}
+                                <p className="mb-6">
+                                    Memasuki puncak musim hujan, BPBD Kabupaten Indramayu mengimbau
+                                    seluruh warga untuk meningkatkan kewaspadaan terhadap potensi bencana
+                                    hidrometeorologi seperti banjir, angin kencang, dan tanah longsor.
                                 </p>
-                            </Link>
-                        ))}
-                    </aside>
+                                <p className="mb-6">
+                                    Berdasarkan data dari BMKG, curah hujan di wilayah Kabupaten Indramayu
+                                    diprediksi akan meningkat hingga 40% dalam beberapa pekan ke depan.
+                                    Masyarakat diimbau untuk selalu memantau informasi cuaca terkini dan
+                                    mengikuti arahan dari petugas BPBD.
+                                </p>
+                                <p className="mb-6">
+                                    BPBD telah menyiagakan personel di setiap kecamatan dan membuka posko
+                                    siaga bencana 24 jam. Masyarakat yang membutuhkan bantuan darurat
+                                    dapat menghubungi call center BPBD di nomor (0234) XXXXX.
+                                </p>
+                            </div>
+                        </article>
+
+                        {/* Sidebar */}
+                        <aside className="space-y-6 lg:pl-4">
+                            <div className="sticky top-28 bg-white rounded-[24px] border border-premium-border p-6 shadow-sm">
+                                <h3 className="text-lg font-bold text-premium-heading mb-4 font-heading border-b border-premium-border pb-3">Baca Juga</h3>
+                                <div className="space-y-4">
+                                    {relatedArticles.map((related) => (
+                                        <Link
+                                            key={related.id}
+                                            href={newsShow({ slug: related.slug })}
+                                            className="group block py-3 border-b border-premium-border/50 last:border-0 last:pb-0"
+                                        >
+                                            <p className="text-xs font-bold text-premium-blue-accent mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+                                                <Calendar className="h-3 w-3" />
+                                                {new Date(related.publishedAt).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                            <p className="text-sm font-bold text-premium-heading group-hover:text-premium-blue-accent transition-colors line-clamp-2 leading-snug">
+                                                {related.title}
+                                            </p>
+                                        </Link>
+                                    ))}
+                                </div>
+                                <div className="mt-6 pt-4 text-center">
+                                    <Link href={news()} className="inline-flex items-center justify-center gap-2 text-sm font-bold text-premium-blue-accent hover:text-premium-blue-hover transition-colors">
+                                        Lihat Semua Berita <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
                 </div>
             </div>
         </>

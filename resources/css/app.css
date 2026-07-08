@@ -29,6 +29,22 @@
   --disaster-text: #12263d;
   --disaster-muted: #61748a;
   --disaster-white-muted: #c4d0e1;
+
+  /* Premium Design Tokens */
+  --premium-navy: #0B2A52;
+  --premium-navy-dark: #071D3B;
+  --premium-navy-darker: #082548;
+  --premium-blue-accent: #1E88FF;
+  --premium-blue-hover: #1573E8;
+  --premium-success: #22C55E;
+  --premium-danger: #EF4444;
+  --premium-warning: #F59E0B;
+  --premium-bg: #F7F9FC;
+  --premium-card: #FFFFFF;
+  --premium-border: #E8EDF5;
+  --premium-heading: #0F172A;
+  --premium-body: #475569;
+  --premium-caption: #94A3B8;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -86,6 +102,21 @@
   --color-disaster-text: var(--disaster-text);
   --color-disaster-muted: var(--disaster-muted);
   --color-disaster-white-muted: var(--disaster-white-muted);
+  
+  --color-premium-navy: var(--premium-navy);
+  --color-premium-navy-dark: var(--premium-navy-dark);
+  --color-premium-navy-darker: var(--premium-navy-darker);
+  --color-premium-blue-accent: var(--premium-blue-accent);
+  --color-premium-blue-hover: var(--premium-blue-hover);
+  --color-premium-success: var(--premium-success);
+  --color-premium-danger: var(--premium-danger);
+  --color-premium-warning: var(--premium-warning);
+  --color-premium-bg: var(--premium-bg);
+  --color-premium-card: var(--premium-card);
+  --color-premium-border: var(--premium-border);
+  --color-premium-heading: var(--premium-heading);
+  --color-premium-body: var(--premium-body);
+  --color-premium-caption: var(--premium-caption);
   --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -171,6 +202,19 @@
   :focus-visible {
     outline: 2px solid var(--disaster-blue-600);
     outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .glass-premium {
+    background-color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+  .glass-dark-premium {
+    background-color: rgba(11, 42, 82, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
 
