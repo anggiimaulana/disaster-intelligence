@@ -25,7 +25,7 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
-                return null;
+                return ({ children }: any) => <PublicLayout overlayHeader>{children}</PublicLayout>;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
@@ -33,7 +33,7 @@ createInertiaApp({
             case name.startsWith('disaster/'):
                 return AdminLayout;
             case name.startsWith('public/'):
-                return PublicLayout;
+                return ({ children }: any) => <PublicLayout>{children}</PublicLayout>;
             default:
                 return AppLayout;
         }
