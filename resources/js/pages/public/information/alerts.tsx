@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Bell } from 'lucide-react';
+import { ArrowLeft, Bell, Search, AlertTriangle, Info, MapPin } from 'lucide-react';
+import { EthicalHero } from '@/components/ui/hero-ethical';
 import { information } from '@/routes/public';
 import ActiveAlertCard from '@/components/public/home/ActiveAlertCard';
 import { MOCK_ALERTS } from '@/data/mock/public/alerts';
@@ -10,32 +12,122 @@ interface AlertsPageProps extends PageProps {
 }
 
 export default function AlertsPage({ isSimulation }: AlertsPageProps) {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+    const [typeFilter, setTypeFilter] = useState('ALL');
+
+    const filteredAlerts = MOCK_ALERTS.filter((alert) => {
+        const matchesSearch = 
+            alert.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            alert.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (alert.village || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === 'ALL' || alert.status === statusFilter;
+        const matchesType = typeFilter === 'ALL' || alert.disasterType === typeFilter;
+        return matchesSearch && matchesStatus && matchesType;
+    });
+
+    const activeCount = MOCK_ALERTS.filter(a => a.status === 'AKTIF').length;
+    const warningCount = MOCK_ALERTS.filter(a => a.status === 'WASPADA').length;
+
     return (
         <>
             <Head title="Peringatan Dini - Disaster Intelligence" />
-            <div className="mx-auto max-w-[1240px] px-4 lg:px-6 py-8 lg:py-12">
-                <Link
-                    href={information()}
-                    className="inline-flex items-center gap-1 text-sm text-[#003366] hover:text-[#002B5C] mb-6"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke Informasi
-                </Link>
+            <EthicalHero
+                kicker="Status Siaga"
+                title={
+                    <>
+                        Peringatan{' '}
+                        <span className="text-premium-danger">Dini</span> Terkini
+                    </>
+                }
+                subtitle="Pantau peringatan dini bencana terkini di Kabupaten Indramayu. Tetap waspada untuk keselamatan Anda dan keluarga."
+            />
 
-                <div className="flex items-center gap-3 mb-6">
-                    <Bell className="h-6 w-6 text-[#003366]" />
-                    <div>
-                        <h1 className="text-xl lg:text-2xl font-bold text-[#1F2937]">Peringatan Dini</h1>
-                        <p className="text-sm text-[#6B7280]">
-                            Peringatan dini bencana terkini di Kabupaten Indramayu
-                        </p>
+            <div className="bg-premium-bg pb-20">
+                <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+                    <div className="max-w-4xl mx-auto space-y-6">
+                        
+                        {/* Statistics Cards */}
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="bg-white rounded-[24px] p-6 border border-premium-border shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-full bg-premium-blue-accent/10 flex items-center justify-center">
+                                        <Bell className="h-4 w-4 text-premium-blue-accent" />
+                                    </div>
+                                    <span className="text-sm font-bold text-premium-caption">Total Peringatan</span>
+                                </div>
+                                <div className="text-3xl font-black text-premium-heading font-heading">{MOCK_ALERTS.length}</div>
+                            </div>
+                            <div className="bg-white rounded-[24px] p-6 border border-premium-border shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-full bg-premium-danger/10 flex items-center justify-center">
+                                        <AlertTriangle className="h-4 w-4 text-premium-danger" />
+                                    </div>
+                                    <span className="text-sm font-bold text-premium-caption">Status Aktif</span>
+                                </div>
+                                <div className="text-3xl font-black text-premium-heading font-heading">{activeCount}</div>
+                            </div>
+                            <div className="bg-white rounded-[24px] p-6 border border-premium-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] col-span-2 lg:col-span-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-full bg-premium-warning/10 flex items-center justify-center">
+                                        <Info className="h-4 w-4 text-premium-warning" />
+                                    </div>
+                                    <span className="text-sm font-bold text-premium-caption">Status Waspada</span>
+                                </div>
+                                <div className="text-3xl font-black text-premium-heading font-heading">{warningCount}</div>
+                            </div>
+                        </div>
+
+                        {/* Search and Filters */}
+                        <div className="bg-white rounded-[24px] p-6 border border-premium-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col lg:flex-row gap-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-premium-caption" />
+                                <input
+                                    type="text"
+                                    placeholder="Cari lokasi atau judul peringatan..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full rounded-2xl border border-premium-border bg-premium-bg/50 py-3 pl-12 pr-4 text-sm text-premium-heading placeholder:text-premium-caption focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent"
+                                />
+                            </div>
+                            <div className="flex gap-4">
+                                <select 
+                                    className="rounded-2xl border border-premium-border bg-premium-bg/50 py-3 px-4 text-sm text-premium-heading focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent appearance-none cursor-pointer"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                >
+                                    <option value="ALL">Semua Status</option>
+                                    <option value="AKTIF">Status Aktif</option>
+                                    <option value="WASPADA">Status Waspada</option>
+                                </select>
+                                <select 
+                                    className="rounded-2xl border border-premium-border bg-premium-bg/50 py-3 px-4 text-sm text-premium-heading focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent appearance-none cursor-pointer"
+                                    value={typeFilter}
+                                    onChange={(e) => setTypeFilter(e.target.value)}
+                                >
+                                    <option value="ALL">Semua Bencana</option>
+                                    <option value="BANJIR">Banjir</option>
+                                    <option value="LONGSOR">Longsor</option>
+                                    <option value="ANGIN_KENCANG">Angin Kencang</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Alerts List */}
+                        <div className="space-y-4">
+                            {filteredAlerts.length > 0 ? (
+                                filteredAlerts.map((alert) => (
+                                    <ActiveAlertCard key={alert.id} alert={alert} variant="full" />
+                                ))
+                            ) : (
+                                <div className="text-center py-16 bg-white rounded-[24px] border border-premium-border border-dashed">
+                                    <MapPin className="h-10 w-10 text-premium-caption mx-auto mb-4" />
+                                    <p className="text-base font-medium text-premium-heading">Tidak ada peringatan yang sesuai</p>
+                                    <p className="text-sm text-premium-body mt-1">Coba ubah kata pencarian atau filter yang Anda gunakan.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-
-                <div className="space-y-4">
-                    {MOCK_ALERTS.map((alert) => (
-                        <ActiveAlertCard key={alert.id} alert={alert} variant="full" />
-                    ))}
                 </div>
             </div>
         </>

@@ -14,13 +14,13 @@ use App\Http\Controllers\Public\ReportController;
 use App\Http\Controllers\Validasi\ValidasiController;
 use Illuminate\Support\Facades\Route;
 
-// Route::inertia('/', 'welcome')->name('home');
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::prefix('public')->group(function () {
     Route::get('peta-bencana', [DisasterMapController::class, 'index'])->name('public.disaster-map');
     Route::get('lapor-bencana', [ReportController::class, 'index'])->name('public.report');
     Route::post('lapor-bencana', [ReportController::class, 'store'])->name('public.report.store');
+    Route::get('lacak-laporan', [ReportController::class, 'track'])->name('public.report.track');
 
     Route::get('informasi', [InformationController::class, 'index'])->name('public.information');
     Route::get('informasi/peringatan-dini', [InformationController::class, 'alerts'])->name('public.information.alerts');

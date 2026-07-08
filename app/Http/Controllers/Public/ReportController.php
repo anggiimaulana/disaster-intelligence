@@ -21,4 +21,13 @@ class ReportController extends Controller
         // Simpan laporan (belum diimplementasikan — masih prototipe)
         return back()->with('success', 'Laporan berhasil dikirim. Tim BPBD akan memverifikasi laporan Anda.');
     }
+
+    public function track(\Illuminate\Http\Request $request)
+    {
+        return Inertia::render('public/tracking/index', [
+            'title' => 'Lacak Laporan',
+            'searchId' => $request->query('id'),
+            'isSimulation' => true,
+        ]);
+    }
 }

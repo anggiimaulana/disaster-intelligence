@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, ChevronDown, Search } from 'lucide-react';
-import { information } from '@/routes/public';
+import { Head } from '@inertiajs/react';
+import { ChevronDown, Search } from 'lucide-react';
+import { EthicalHero } from '@/components/ui/hero-ethical';
 import { MOCK_FAQS } from '@/data/mock/public/articles';
 import type { PageProps } from '@/types';
 
@@ -22,62 +22,76 @@ export default function FaqPage({ isSimulation }: FaqPageProps) {
     return (
         <>
             <Head title="FAQ - Disaster Intelligence" />
-            <div className="mx-auto max-w-[1240px] px-4 lg:px-6 py-8 lg:py-12">
-                <Link
-                    href={information()}
-                    className="inline-flex items-center gap-1 text-sm text-[#003366] hover:text-[#002B5C] mb-6"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali ke Informasi
-                </Link>
+            <EthicalHero
+                kicker="Tanya Jawab"
+                title={
+                    <>
+                        FAQ &{' '}
+                        <span className="text-premium-blue-accent">Bantuan</span>
+                    </>
+                }
+                subtitle="Temukan jawaban untuk pertanyaan yang paling sering diajukan seputar sistem pelaporan dan penanggulangan bencana."
+            />
 
-                <h1 className="text-xl lg:text-2xl font-bold text-[#1F2937] mb-2">
-                    Tanya Jawab (FAQ)
-                </h1>
-                <p className="text-sm text-[#6B7280] mb-6">
-                    Pertanyaan yang sering diajukan seputar sistem dan pelaporan bencana
-                </p>
+            <div className="bg-premium-bg pb-20">
+                <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="relative mb-8">
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-premium-caption" />
+                            <input
+                                type="text"
+                                placeholder="Cari pertanyaan Anda di sini..."
+                                value={search}
+                                onChange={(e) => { setSearch(e.target.value); setOpenId(null); }}
+                                className="w-full rounded-[20px] border border-premium-border bg-white py-4 pl-14 pr-6 text-base text-premium-heading placeholder:text-premium-caption focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent shadow-sm"
+                            />
+                        </div>
 
-                <div className="relative max-w-md mb-8">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
-                    <input
-                        type="text"
-                        placeholder="Cari pertanyaan..."
-                        value={search}
-                        onChange={(e) => { setSearch(e.target.value); setOpenId(null); }}
-                        className="w-full rounded-xl border border-[#E5E7EB] bg-white py-2.5 pl-10 pr-4 text-sm text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#003366]/20 focus:border-[#003366]"
-                    />
-                </div>
-
-                <div className="space-y-3 max-w-3xl">
-                    {filtered.map((faq) => (
-                        <div
-                            key={faq.id}
-                            className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden"
-                        >
-                            <button
-                                onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
-                                className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
-                            >
-                                <span className="pr-4">{faq.question}</span>
-                                <ChevronDown
-                                    className={`h-4 w-4 shrink-0 text-[#6B7280] transition-transform ${
-                                        openId === faq.id ? 'rotate-180' : ''
+                        <div className="space-y-4">
+                            {filtered.map((faq) => (
+                                <div
+                                    key={faq.id}
+                                    className={`rounded-[20px] border transition-all duration-300 overflow-hidden ${
+                                        openId === faq.id 
+                                        ? 'bg-white border-premium-blue-accent/30 shadow-md ring-4 ring-premium-blue-accent/5' 
+                                        : 'bg-white border-premium-border hover:border-premium-blue-accent/30 hover:shadow-sm'
                                     }`}
-                                />
-                            </button>
-                            {openId === faq.id && (
-                                <div className="px-5 pb-4 text-sm text-[#6B7280] leading-relaxed border-t border-[#E5E7EB] pt-3">
-                                    {faq.answer}
+                                >
+                                    <button
+                                        onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
+                                        className="flex w-full items-center justify-between px-6 py-5 text-left"
+                                    >
+                                        <span className={`text-base font-bold pr-4 transition-colors ${openId === faq.id ? 'text-premium-blue-accent' : 'text-premium-heading'}`}>
+                                            {faq.question}
+                                        </span>
+                                        <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${openId === faq.id ? 'bg-premium-blue-accent/10' : 'bg-premium-bg'}`}>
+                                            <ChevronDown
+                                                className={`h-5 w-5 transition-transform duration-300 ${
+                                                    openId === faq.id ? 'rotate-180 text-premium-blue-accent' : 'text-premium-caption'
+                                                }`}
+                                            />
+                                        </div>
+                                    </button>
+                                    <div 
+                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                                            openId === faq.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                                        }`}
+                                    >
+                                        <div className="px-6 pb-6 pt-2 text-base text-premium-body leading-relaxed">
+                                            {faq.answer}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {filtered.length === 0 && (
+                                <div className="text-center py-16 bg-white rounded-[24px] border border-premium-border border-dashed">
+                                    <Search className="h-10 w-10 text-premium-caption mx-auto mb-4" />
+                                    <p className="text-base font-medium text-premium-heading">Tidak ada hasil yang ditemukan</p>
+                                    <p className="text-sm text-premium-body mt-1">Coba gunakan kata kunci pencarian yang lain.</p>
                                 </div>
                             )}
                         </div>
-                    ))}
-                    {filtered.length === 0 && (
-                        <p className="text-sm text-[#9CA3AF] text-center py-8">
-                            Tidak ada hasil yang ditemukan untuk &quot;{search}&quot;
-                        </p>
-                    )}
+                    </div>
                 </div>
             </div>
         </>
