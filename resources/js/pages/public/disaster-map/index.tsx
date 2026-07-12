@@ -12,8 +12,7 @@ import {
     Activity,
     Map as MapIcon,
 } from 'lucide-react';
-import { home } from '@/routes';
-import { report } from '@/routes/public';
+import { home, laporBencana } from '@/routes';
 import { getDisasterLabel } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -71,7 +70,7 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
                     </>
                 }
                 subtitle="Visualisasi geografis kejadian bencana di Kabupaten Indramayu. Filter berdasarkan jenis bencana, lihat detail lokasi, dan akses laporan warga secara langsung."
-                primary={{ label: 'Lapor Darurat', href: report() }}
+                primary={{ label: 'Lapor Darurat', href: laporBencana() }}
                 meta="Diperbarui setiap 5 menit · Sumber: BPBD & laporan warga"
             />
 

@@ -73,7 +73,7 @@ export default function InformationPage({}: InformationPageProps) {
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         {CATEGORIES.map(({ icon: Icon, title, desc, href, iconBg, iconColor, badge, badgeColor }) => (
                             <Link
-                                key={href}
+                                key={href.url}
                                 href={href}
                                 className="group flex flex-col h-full rounded-[24px] border border-premium-border bg-white p-6 sm:p-8 shadow-[0_10px_30px_rgba(15,23,42,0.03)] hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
                             >

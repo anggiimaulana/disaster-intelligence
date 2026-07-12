@@ -2,10 +2,10 @@ import { Link } from '@inertiajs/react';
 import { MapPin, Phone, Mail, AlertTriangle } from 'lucide-react';
 import {
     disasterMap,
-    report,
     about,
     contact,
 } from '@/routes/public';
+import { laporBencana } from '@/routes';
 import {
     alerts,
     faq,
@@ -22,7 +22,7 @@ const FOOTER_LINKS = [
         title: 'Layanan',
         links: [
             { label: 'Peta Bencana', href: disasterMap() },
-            { label: 'Lapor Bencana', href: report() },
+            { label: 'Lapor Bencana', href: laporBencana() },
             { label: 'Peringatan Dini', href: alerts() },
             { label: 'Kesiapsiagaan', href: preparedness() },
         ],

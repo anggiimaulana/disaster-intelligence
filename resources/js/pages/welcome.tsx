@@ -1,7 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, Activity, AlertTriangle, ShieldCheck, Map, BellRing, Droplet, Wind, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { disasterMap, report } from '@/routes/public';
+import { disasterMap } from '@/routes/public';
+import { laporBencana } from '@/routes';
 
 export default function Welcome() {
     return (
@@ -44,7 +45,7 @@ export default function Welcome() {
                             
                             <div className="flex flex-wrap items-center gap-4">
                                 <Button asChild className="h-14 px-8 rounded-[18px] bg-premium-blue-accent hover:bg-premium-blue-hover text-white text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all border-0">
-                                    <Link href={report()}>
+                                    <Link href={laporBencana()}>
                                         Lapor Kejadian <ArrowRight className="ml-2 h-5 w-5" />
                                     </Link>
                                 </Button>

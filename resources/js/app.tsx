@@ -8,6 +8,9 @@ import AuthLayout from '@/layouts/auth-layout';
 import PublicLayout from '@/layouts/public-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
+// Initialize Laravel Echo for real-time broadcasting
+import './bootstrap';
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 const adminPages = [

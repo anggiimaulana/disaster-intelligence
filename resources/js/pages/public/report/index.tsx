@@ -202,7 +202,7 @@ export default function ReportPage({}: ReportPageProps) {
                                     asChild
                                     className="w-full h-12 bg-[#25D366] text-white hover:bg-[#1DA851] rounded-[14px] font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
                                 >
-                                    <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
+                                    <a href="https://wa.me/6285647075733" target="_blank" rel="noopener noreferrer">
                                         <MessageCircle className="h-5 w-5 mr-2" />
                                         Chat WhatsApp
                                     </a>

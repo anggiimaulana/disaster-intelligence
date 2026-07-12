@@ -3,6 +3,12 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\EarlyWarning;
+use App\Models\JenisBencana;
+use App\Models\LaporanBencana;
+use App\Models\Wilayah;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -10,149 +16,231 @@ class DashboardController extends Controller
 {
     public function index(): Response
     {
-        // Real kecamatan center coordinates from dataset
-        $kecamatanCoords = [
-            'Anjatan' => [-6.372532, 107.946761],
-            'Arahan' => [-6.360261, 108.253979],
-            'Balongan' => [-6.381898, 108.371611],
-            'Bangodua' => [-6.516232, 108.291483],
-            'Bongas' => [-6.381079, 108.021079],
-            'Cantigi' => [-6.336671, 108.249001],
-            'Cikedung' => [-6.501886, 108.181326],
-            'Gabuswetan' => [-6.435380, 108.069649],
-            'Gantar' => [-6.535662, 107.945367],
-            'Haurgeulis' => [-6.453552, 107.937276],
-            'Indramayu' => [-6.343098, 108.330180],
-            'Jatibarang' => [-6.444092, 108.308969],
-            'Juntinyuat' => [-6.433649, 108.412843],
-            'Kandanghaur' => [-6.357974, 108.090547],
-            'Karangampel' => [-6.470611, 108.450573],
-            'Kedokan Bunder' => [-6.496816, 108.417100],
-            'Kertasemaya' => [-6.520550, 108.368326],
-            'Krangkeng' => [-6.520126, 108.476681],
-            'Kroya' => [-6.484710, 108.042856],
-            'Lelea' => [-6.458789, 108.227784],
-            'Lohbener' => [-6.405672, 108.262739],
-            'Losarang' => [-6.400017, 108.164470],
-            'Pasekan' => [-6.297226, 108.322564],
-            'Patrol' => [-6.318266, 107.995169],
-            'Sindang' => [-6.341285, 108.310468],
-            'Sliyeg' => [-6.454214, 108.347047],
-            'Sukagumiwang' => [-6.578767, 108.316760],
-            'Sukra' => [-6.303870, 107.946197],
-            'Terisi' => [-6.493468, 108.134793],
-            'Tukdana' => [-6.561291, 108.290927],
-            'Widasari' => [-6.460692, 108.279555],
-        ];
+        // Real stats from database
+        $stats = Cache::remember('dashboard:stats', 60, function () {
+            $now = now();
+            $lastWeek = $now->copy()->subDays(6)->startOfDay();
 
-        // Generate map markers at real kecamatan locations
-        $disasterTypes = ['BANJIR', 'LONGSOR', 'KEBAKARAN', 'ANGIN_KENCANG', 'LAINNYA'];
-        $mapMarkers = [];
-        $id = 1;
-
-        // Distribute incidents across kecamatan realistically
-        $incidents = [
-            ['kec' => 'Jatibarang', 'type' => 'BANJIR'],
-            ['kec' => 'Haurgeulis', 'type' => 'BANJIR'],
-            ['kec' => 'Sindang', 'type' => 'LONGSOR'],
-            ['kec' => 'Karangampel', 'type' => 'BANJIR'],
-            ['kec' => 'Lohbener', 'type' => 'KEBAKARAN'],
-            ['kec' => 'Anjatan', 'type' => 'ANGIN_KENCANG'],
-            ['kec' => 'Bongas', 'type' => 'BANJIR'],
-            ['kec' => 'Kandanghaur', 'type' => 'LONGSOR'],
-            ['kec' => 'Kroya', 'type' => 'BANJIR'],
-            ['kec' => 'Sukra', 'type' => 'LAINNYA'],
-            ['kec' => 'Patrol', 'type' => 'BANJIR'],
-            ['kec' => 'Losarang', 'type' => 'LONGSOR'],
-            ['kec' => 'Indramayu', 'type' => 'BANJIR'],
-            ['kec' => 'Arahan', 'type' => 'BANJIR'],
-            ['kec' => 'Cantigi', 'type' => 'BANJIR'],
-            ['kec' => 'Lelea', 'type' => 'LONGSOR'],
-            ['kec' => 'Sliyeg', 'type' => 'BANJIR'],
-            ['kec' => 'Gabuswetan', 'type' => 'ANGIN_KENCANG'],
-            ['kec' => 'Widasari', 'type' => 'BANJIR'],
-            ['kec' => 'Terisi', 'type' => 'LONGSOR'],
-            ['kec' => 'Kertasemaya', 'type' => 'BANJIR'],
-            ['kec' => 'Juntinyuat', 'type' => 'KEBAKARAN'],
-            ['kec' => 'Cikedung', 'type' => 'LONGSOR'],
-            ['kec' => 'Bangodua', 'type' => 'BANJIR'],
-            ['kec' => 'Pasekan', 'type' => 'BANJIR'],
-            ['kec' => 'Gantar', 'type' => 'LAINNYA'],
-            ['kec' => 'Tukdana', 'type' => 'BANJIR'],
-            ['kec' => 'Kedokan Bunder', 'type' => 'LONGSOR'],
-            ['kec' => 'Krangkeng', 'type' => 'BANJIR'],
-            ['kec' => 'Sukagumiwang', 'type' => 'ANGIN_KENCANG'],
-            ['kec' => 'Balongan', 'type' => 'KEBAKARAN'],
-        ];
-
-        foreach ($incidents as $inc) {
-            $coords = $kecamatanCoords[$inc['kec']] ?? null;
-            if (! $coords) {
-                continue;
-            }
-            // Add small random offset so markers don't overlap exactly
-            $mapMarkers[] = [
-                'id' => (string) $id++,
-                'lat' => $coords[0] + (mt_rand(-30, 30) / 10000),
-                'lng' => $coords[1] + (mt_rand(-30, 30) / 10000),
-                'type' => $inc['type'],
-                'kecamatan' => $inc['kec'],
+            return [
+                'totalLaporan' => [
+                    'value' => LaporanBencana::count(),
+                    'trend' => LaporanBencana::selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->values()
+                        ->toArray(),
+                ],
+                'belumDiverifikasi' => [
+                    'value' => LaporanBencana::where('status_id', 1)->count(),
+                    'trend' => LaporanBencana::where('status_id', 1)
+                        ->selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->values()
+                        ->toArray(),
+                    'pct' => LaporanBencana::count() > 0
+                        ? round((LaporanBencana::where('status_id', 1)->count() / LaporanBencana::count()) * 100)
+                        : 0,
+                ],
+                'warningAktif' => [
+                    'value' => EarlyWarning::where('status', 'aktif')->count(),
+                    'trend' => EarlyWarning::where('status', 'aktif')
+                        ->selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->values()
+                        ->toArray(),
+                ],
+                'laporanValid' => [
+                    'value' => LaporanBencana::where('validasi_admin', true)->count(),
+                    'trend' => LaporanBencana::where('validasi_admin', true)
+                        ->selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->values()
+                        ->toArray(),
+                    'pct' => LaporanBencana::count() > 0
+                        ? round((LaporanBencana::where('validasi_admin', true)->count() / LaporanBencana::count()) * 100)
+                        : 0,
+                ],
+                'pengirimLaporan' => [
+                    'value' => LaporanBencana::distinct('whatsapp_message_id')->count(),
+                    'trend' => LaporanBencana::selectRaw('DATE(created_at) as date, count(DISTINCT whatsapp_message_id) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->whereNotNull('whatsapp_message_id')
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->values()
+                        ->toArray(),
+                ],
             ];
+        });
+
+        // Map markers from real reports with coordinates
+        $mapMarkers = Cache::remember('dashboard:map_markers', 300, function () {
+            return LaporanBencana::whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->with('jenisBencana:id,kode,nama_bencana')
+                ->get()
+                ->map(function ($r) {
+                    $coords = [
+                        'lat' => (float) $r->latitude,
+                        'lng' => (float) $r->longitude,
+                    ];
+                    // Add small random offset to prevent overlap
+                    $coords['lat'] += (mt_rand(-30, 30) / 10000);
+                    $coords['lng'] += (mt_rand(-30, 30) / 10000);
+
+                    return [
+                        'id' => (string) $r->id,
+                        'lat' => $coords['lat'],
+                        'lng' => $coords['lng'],
+                        'type' => $r->jenisBencana?->kode ?? 'LAINNYA',
+                        'kecamatan' => $r->kecamatan,
+                        'judul' => $r->judul,
+                    ];
+                })
+                ->toArray();
+        });
+
+        // Latest reports
+        $laporanTerbaru = LaporanBencana::with(['jenisBencana:id,kode,nama_bencana,warna', 'status:id,nama_status,warna'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'id' => (string) $r->id,
+                    'laporan_id' => $r->kode_laporan,
+                    'judul' => $r->judul,
+                    'lokasi' => $r->alamat,
+                    'kecamatan' => $r->kecamatan,
+                    'waktu' => $r->created_at->format('H:i').' WIB',
+                    'foto_url' => $r->media->first()?->file_url,
+                    'risk_level' => $r->tingkat_keparahan,
+                    'status' => $r->status?->nama_status ?? 'MENUNGGU',
+                ];
+            })
+            ->toArray();
+
+        // Trend data (last 7 days)
+        $trendData = LaporanBencana::selectRaw('DATE(created_at) as tanggal, count(*) as count')
+            ->where('created_at', '>=', now()->copy()->subDays(6)->startOfDay())
+            ->groupBy('tanggal')
+            ->orderBy('tanggal')
+            ->pluck('count', 'tanggal')
+            ->map(fn ($c, $t) => ['tanggal' => Carbon::parse($t)->format('d M'), 'count' => (int) $c])
+            ->values()
+            ->toArray();
+
+        // Reports by disaster type
+        $laporanByJenis = LaporanBencana::with('jenisBencana:id,kode,nama_bencana,warna')
+            ->selectRaw('jenis_bencana_id, count(*) as count')
+            ->groupBy('jenis_bencana_id')
+            ->get()
+            ->map(function ($item) {
+                $jenis = $item->jenisBencana;
+
+                return [
+                    'type' => $jenis?->kode ?? 'LAINNYA',
+                    'label' => $jenis?->nama_bencana ?? 'Lainnya',
+                    'count' => (int) $item->count,
+                    'pct' => 0, // will calculate below
+                    'color' => $jenis?->warna ?? '#8B5CF6',
+                ];
+            })
+            ->toArray();
+
+        // Calculate percentages
+        $totalByJenis = array_sum(array_column($laporanByJenis, 'count'));
+        if ($totalByJenis > 0) {
+            $laporanByJenis = array_map(function ($item) use ($totalByJenis) {
+                $item['pct'] = round(($item['count'] / $totalByJenis) * 100);
+
+                return $item;
+            }, $laporanByJenis);
         }
 
-        // Build kecamatan filter list
-        $kecamatanList = collect($kecamatanCoords)->keys()->sort()->values()->map(function ($name, $i) {
-            return ['id' => (string) ($i + 1), 'nama' => $name, 'kabupaten' => 'Indramayu'];
-        })->toArray();
+        // Overall risk score (based on recent high-risk reports)
+        $riskStats = LaporanBencana::where('created_at', '>=', now()->subDays(30))
+            ->selectRaw('tingkat_keparahan, count(*) as count')
+            ->groupBy('tingkat_keparahan')
+            ->pluck('count', 'tingkat_keparahan')
+            ->toArray();
+
+        $riskWeights = ['Rendah' => 1, 'Sedang' => 3, 'Tinggi' => 7, 'Darurat' => 10];
+        $totalRiskReports = array_sum($riskStats);
+        $weightedScore = 0;
+        foreach ($riskStats as $level => $count) {
+            $weightedScore += ($riskWeights[$level] ?? 1) * $count;
+        }
+        $riskScore = $totalRiskReports > 0 ? min(100, round(($weightedScore / ($totalRiskReports * 10)) * 100)) : 0;
+
+        $risikoKeseluruhan = [
+            'score' => $riskScore,
+            'label' => $this->getRiskLabel($riskScore),
+            'color' => $this->getRiskColor($riskScore),
+        ];
+
+        // Filter options
+        $kecamatanList = Wilayah::where('kabupaten', 'Indramayu')
+            ->whereNotNull('kecamatan')
+            ->distinct('kecamatan')
+            ->orderBy('kecamatan')
+            ->pluck('kecamatan')
+            ->map(function ($name, $i) {
+                return ['id' => (string) ($i + 1), 'nama' => $name, 'kabupaten' => 'Indramayu'];
+            })
+            ->toArray();
+
+        $jenisOptions = JenisBencana::orderBy('kode')->pluck('kode')->toArray();
 
         return Inertia::render('disaster/dashboard', [
-            'stats' => [
-                'totalLaporan' => 128,
-                'totalLaporanTrend' => [12, 18, 15, 22, 28, 33, 18],
-                'belumDiverifikasi' => 35,
-                'belumDiverifikasiPct' => 27,
-                'belumDiverifikasiTrend' => [8, 12, 10, 14, 11, 15, 13],
-                'warningAktif' => 12,
-                'warningAktifTrend' => [4, 6, 5, 8, 7, 10, 12],
-                'laporanValid' => 81,
-                'laporanValidPct' => 63,
-                'laporanValidTrend' => [10, 14, 12, 16, 18, 20, 15],
-                'pengirimLaporan' => 96,
-                'pengirimLaporanTrend' => [12, 15, 18, 14, 20, 22, 16],
-            ],
+            'stats' => $stats,
             'mapMarkers' => $mapMarkers,
-            'laporanTerbaru' => [
-                ['id' => '1', 'laporan_id' => '#LAP-2026-00145', 'judul' => 'Banjir di Jatibarang', 'lokasi' => 'Jl. Raya Jatibarang', 'kecamatan' => 'Jatibarang', 'waktu' => '10:35 WIB', 'foto_url' => null, 'risk_level' => 'TINGGI', 'status' => 'BARU'],
-                ['id' => '2', 'laporan_id' => '#LAP-2026-00144', 'judul' => 'Longsor di Cikedung', 'lokasi' => 'Desa Cikedung Lor', 'kecamatan' => 'Cikedung', 'waktu' => '10:26 WIB', 'foto_url' => null, 'risk_level' => 'SEDANG', 'status' => 'MENUNGGU_VALIDASI'],
-                ['id' => '3', 'laporan_id' => '#LAP-2026-00143', 'judul' => 'Banjir di Lohbener', 'lokasi' => 'Desa Lohbener', 'kecamatan' => 'Lohbener', 'waktu' => '10:11 WIB', 'foto_url' => null, 'risk_level' => 'SEDANG', 'status' => 'MENUNGGU_VALIDASI'],
-                ['id' => '4', 'laporan_id' => '#LAP-2026-00142', 'judul' => 'Genangan di Kandanghaur', 'lokasi' => 'Desa Kandanghaur', 'kecamatan' => 'Kandanghaur', 'waktu' => '09:58 WIB', 'foto_url' => null, 'risk_level' => 'RENDAH', 'status' => 'VALID'],
-                ['id' => '5', 'laporan_id' => '#LAP-2026-00141', 'judul' => 'Angin Kencang di Anjatan', 'lokasi' => 'Desa Anjatan', 'kecamatan' => 'Anjatan', 'waktu' => '09:45 WIB', 'foto_url' => null, 'risk_level' => 'RENDAH', 'status' => 'VALID'],
-            ],
-            'trendData' => [
-                ['tanggal' => '15 Mei', 'count' => 12],
-                ['tanggal' => '16 Mei', 'count' => 18],
-                ['tanggal' => '17 Mei', 'count' => 15],
-                ['tanggal' => '18 Mei', 'count' => 22],
-                ['tanggal' => '19 Mei', 'count' => 28],
-                ['tanggal' => '20 Mei', 'count' => 33],
-                ['tanggal' => '21 Mei', 'count' => 18],
-            ],
-            'laporanByJenis' => [
-                ['type' => 'BANJIR', 'label' => 'Banjir', 'count' => 45, 'pct' => 35, 'color' => '#3B82F6'],
-                ['type' => 'LONGSOR', 'label' => 'Longsor', 'count' => 28, 'pct' => 22, 'color' => '#F59E0B'],
-                ['type' => 'KEBAKARAN', 'label' => 'Kebakaran', 'count' => 12, 'pct' => 9, 'color' => '#EF4444'],
-                ['type' => 'ANGIN_KENCANG', 'label' => 'Angin Kencang', 'count' => 8, 'pct' => 6, 'color' => '#22C55E'],
-                ['type' => 'LAINNYA', 'label' => 'Lainnya', 'count' => 7, 'pct' => 6, 'color' => '#8B5CF6'],
-            ],
-            'risikoKeseluruhan' => [
-                'score' => 76,
-                'label' => 'Risiko Tinggi',
-                'color' => '#EF4444',
-            ],
+            'laporanTerbaru' => $laporanTerbaru,
+            'trendData' => $trendData,
+            'laporanByJenis' => $laporanByJenis,
+            'risikoKeseluruhan' => $risikoKeseluruhan,
             'filters' => [
                 'kecamatan' => $kecamatanList,
-                'jenisOptions' => ['BANJIR', 'LONGSOR', 'KEBAKARAN', 'ANGIN_KENCANG', 'LAINNYA'],
+                'jenisOptions' => $jenisOptions,
             ],
         ]);
+    }
+
+    private function getRiskLabel(int $score): string
+    {
+        return match (true) {
+            $score >= 80 => 'Risiko Sangat Tinggi',
+            $score >= 60 => 'Risiko Tinggi',
+            $score >= 40 => 'Risiko Sedang',
+            default => 'Risiko Rendah',
+        };
+    }
+
+    private function getRiskColor(int $score): string
+    {
+        return match (true) {
+            $score >= 80 => '#EF4444',
+            $score >= 60 => '#F97316',
+            $score >= 40 => '#F59E0B',
+            default => '#22C55E',
+        };
     }
 }

@@ -16,7 +16,7 @@ const CONTACT_CHANNELS = [
     { icon: Phone, label: 'Telepon', value: '(0234) XXXXX', href: 'tel:620234000000' },
     { icon: Mail, label: 'Email', value: 'bpbd@indramayukab.go.id', href: 'mailto:bpbd@indramayukab.go.id' },
     { icon: Clock, label: 'Jam Operasional', value: 'Senin - Jumat, 07:30 - 16:00 WIB', href: null },
-    { icon: MessageCircle, label: 'WhatsApp', value: '0812-3456-7890', href: 'https://wa.me/6281234567890' },
+    { icon: MessageCircle, label: 'WhatsApp', value: '0856-4707-5733', href: 'https://wa.me/6285647075733' },
 ];
 
 const BPBD_LOCATION: [number, number] = [-6.330, 108.322];

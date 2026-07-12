@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Flame, Mountain, MoreHorizontal, Waves, Wind } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const disasterConfig: Record<DisasterType, { label: string; icon: LucideIcon; color: string }> = {
+const disasterConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
     BANJIR: { label: 'Banjir', icon: Waves, color: 'text-blue-600 bg-blue-50' },
     LONGSOR: { label: 'Longsor', icon: Mountain, color: 'text-amber-600 bg-amber-50' },
     KEBAKARAN: { label: 'Kebakaran', icon: Flame, color: 'text-red-600 bg-red-50' },
@@ -11,8 +11,13 @@ const disasterConfig: Record<DisasterType, { label: string; icon: LucideIcon; co
     LAINNYA: { label: 'Lainnya', icon: MoreHorizontal, color: 'text-purple-600 bg-purple-50' },
 };
 
-export function DisasterTypeBadge({ type, className }: { type: DisasterType; className?: string }) {
-    const config = disasterConfig[type];
+export function DisasterTypeBadge({ type, className }: { type?: string; className?: string }) {
+    const normalizedType = (type || 'LAINNYA').toString().toUpperCase().replace(/\s+/g, '_');
+    const config = disasterConfig[normalizedType] || {
+        label: type || 'Lainnya',
+        icon: MoreHorizontal,
+        color: 'text-purple-600 bg-purple-50',
+    };
     const Icon = config.icon;
     return (
         <span className={cn('inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium', config.color, className)}>

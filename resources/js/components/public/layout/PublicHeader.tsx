@@ -4,13 +4,14 @@ import { Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
-import { disasterMap, report, information, about, contact } from '@/routes/public';
+import { disasterMap, information, about, contact } from '@/routes/public';
+import { laporBencana } from '@/routes';
 import PublicMobileNav from './PublicMobileNav';
 
 const NAV_LINKS = [
     { href: home(), url: home.url(), label: 'Beranda' },
     { href: disasterMap(), url: disasterMap.url(), label: 'Peta Bencana' },
-    { href: report(), url: report.url(), label: 'Lapor Bencana' },
+    { href: laporBencana(), url: laporBencana.url(), label: 'Lapor Bencana' },
     { href: '/public/lacak-laporan', url: '/public/lacak-laporan', label: 'Lacak Laporan' },
     { href: information(), url: information.url(), label: 'Informasi' },
     { href: about(), url: about.url(), label: 'Tentang' },
@@ -110,7 +111,7 @@ export default function PublicHeader({ overlayHeader, scrolled }: PublicHeaderPr
                             asChild
                             className="hidden sm:inline-flex h-10 lg:h-11 gap-2 bg-[#25D366] text-white hover:bg-[#128C7E] shadow-sm hover:-translate-y-0.5 transition-all duration-300 text-sm font-semibold rounded-full px-5 lg:px-6 border-0"
                         >
-                            <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
+                            <a href="https://wa.me/6285647075733" target="_blank" rel="noopener noreferrer">
                                 <Phone className="h-4 w-4" />
                                 <span className="hidden md:inline">Lapor via WhatsApp</span>
                                 <span className="md:hidden">WhatsApp</span>

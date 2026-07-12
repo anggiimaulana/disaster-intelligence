@@ -203,6 +203,29 @@
     outline: 2px solid var(--disaster-blue-600);
     outline-offset: 2px;
   }
+
+  /* Global cursor-pointer for interactive elements */
+  button:not(:disabled),
+  a,
+  select,
+  input[type="radio"] + label,
+  input[type="checkbox"] + label,
+  label[for],
+  summary,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  .cursor-click {
+    cursor: pointer;
+  }
+
+  /* Ensure disabled buttons show not-allowed */
+  button:disabled,
+  button[disabled],
+  a[disabled],
+  [role="button"][disabled] {
+    cursor: not-allowed;
+  }
 }
 
 @layer utilities {

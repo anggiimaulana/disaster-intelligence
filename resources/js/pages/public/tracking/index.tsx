@@ -172,7 +172,7 @@ export default function TrackingPage({ searchId = '' }: TrackingPageProps) {
                                             <h4 className="text-sm font-bold text-premium-heading mb-1">Ada Info Tambahan?</h4>
                                             <p className="text-xs text-premium-body mb-4">Hubungi pusat panggilan atau WhatsApp kami.</p>
                                             <Button asChild className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white rounded-[14px]">
-                                                <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">Hubungi Petugas</a>
+                                                <a href="https://wa.me/6285647075733" target="_blank" rel="noopener noreferrer">Hubungi Petugas</a>
                                             </Button>
                                         </div>
                                     </div>

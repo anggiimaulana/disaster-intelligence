@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Bell, Brain, Database, Globe, HardDrive, Lock, Mail, MessageCircle, RefreshCw, Send, Settings, Shield, Trash2, Users, Workflow } from 'lucide-react';
+import { AlertTriangle, Bell, Brain, Database, Globe, HardDrive, Lock, Mail, MessageCircle, RefreshCw, Send, Settings, Shield, Trash2, Users, Workflow } from 'lucide-react';
+import { Icon } from "@/components/ui/icon";
 
 const tabs = [
     { id: 'umum', label: 'Umum', icon: Settings },
@@ -261,7 +262,10 @@ export default function SettingsPage() {
                                     </div>
                                 ))}
                             </div>
-                            <p className="mt-3 text-xs text-slate-400">⚠️ Pastikan melakukan backup sebelum melakukan perubahan penting pada sistem.</p>
+                            <p className="mt-3 text-xs text-slate-400">
+                                <Icon iconNode={AlertTriangle} className="w-4 h-4 inline-block mr-1 text-amber-500" />
+                                Pastikan melakukan backup sebelum melakukan perubahan penting pada sistem.
+                            </p>
                         </div>
                     </div>
                 </div>

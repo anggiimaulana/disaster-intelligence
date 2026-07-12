@@ -95,7 +95,7 @@ export default function PublicMobileNav({ open, onClose, links }: PublicMobileNa
                             className="w-full gap-2 bg-[#25D366] text-white hover:bg-[#1DA851] text-sm font-semibold rounded-xl h-12"
                         >
                             <a
-                                href="https://wa.me/6281234567890"
+                                href="https://wa.me/6285647075733"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >

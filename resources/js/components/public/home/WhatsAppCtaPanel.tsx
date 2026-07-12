@@ -34,7 +34,7 @@ export default function WhatsAppCtaPanel() {
                             asChild
                             className="shrink-0 bg-white text-[#1DA851] hover:bg-gray-100 font-bold rounded-xl px-8 h-12 text-base shadow-lg"
                         >
-                            <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
+                            <a href="https://wa.me/6285647075733" target="_blank" rel="noopener noreferrer">
                                 <MessageCircle className="mr-2 h-5 w-5" />
                                 Lapor via WhatsApp
                                 <ArrowRight className="ml-2 h-4 w-4" />

@@ -1,5 +1,5 @@
-export function Sparkline({ data, color = '#3B82F6', height = 32, width = 80 }: { data: number[]; color?: string; height?: number; width?: number }) {
-    if (data.length < 2) return null;
+export function Sparkline({ data, color = '#3B82F6', height = 32, width = 80 }: { data?: number[] | null; color?: string; height?: number; width?: number }) {
+    if (!data || !Array.isArray(data) || data.length < 2) return null;
     const max = Math.max(...data);
     const min = Math.min(...data);
     const range = max - min || 1;
@@ -14,3 +14,4 @@ export function Sparkline({ data, color = '#3B82F6', height = 32, width = 80 }: 
         </svg>
     );
 }
+

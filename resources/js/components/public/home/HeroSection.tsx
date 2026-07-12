@@ -1,7 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, ShieldAlert, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { disasterMap, report } from '@/routes/public';
+import { disasterMap } from '@/routes/public';
+import { laporBencana } from '@/routes';
 import ActiveAlertCard from './ActiveAlertCard';
 import type { PublicAlert, PublicStats } from '@/types/public-disaster';
 
@@ -50,7 +51,7 @@ export default function HeroSection({ alerts, stats }: HeroSectionProps) {
                                 size="lg"
                                 className="bg-cyan-400 text-[#003366] hover:bg-cyan-300 font-bold text-base rounded-xl px-6 h-12 shadow-lg shadow-cyan-500/20"
                             >
-                                <Link href={report()}>
+                                <Link href={laporBencana()}>
                                     Lapor Bencana
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Link>

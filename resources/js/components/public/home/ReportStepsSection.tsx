@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Link } from '@inertiajs/react';
 import { Smartphone, Camera, MapPin, Send, ShieldCheck, ArrowRight } from 'lucide-react';
-import { report } from '@/routes/public';
+import { laporBencana } from '@/routes';
 
 const STEPS = [
     { step: 1, icon: MapPin, title: 'Tentukan Lokasi', desc: 'Pilih lokasi kejadian di peta atau ketik alamat' },
@@ -47,7 +47,7 @@ export default function ReportStepsSection() {
                         asChild
                         className="bg-[#003366] text-white hover:bg-[#002B5C] rounded-xl px-8"
                     >
-                        <Link href={report()}>
+                        <Link href={laporBencana()}>
                             Mulai Lapor Bencana
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
