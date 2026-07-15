@@ -10,6 +10,8 @@ class NlpAnalysis extends Model
 {
     use HasFactory;
 
+    protected $table = 'nlp_analysis';
+
     protected $fillable = [
         'laporan_id',
         'extracted_keywords',

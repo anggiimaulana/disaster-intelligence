@@ -13,16 +13,6 @@ import './bootstrap';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-const adminPages = [
-    'disaster/dashboard',
-    'disaster/incidents',
-    'disaster/incidents/show',
-    'disaster/analysis',
-    'disaster/validation',
-    'disaster/alerts',
-    'disaster/settings',
-];
-
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
@@ -32,8 +22,8 @@ createInertiaApp({
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
-            case name.startsWith('disaster/'):
+                return AdminLayout;
+            case name.startsWith('disaster/') || name.startsWith('admin/'):
                 return AdminLayout;
             case name.startsWith('public/'):
                 return ({ children }: any) => <PublicLayout>{children}</PublicLayout>;

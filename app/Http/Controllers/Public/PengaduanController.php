@@ -11,6 +11,7 @@ use App\Models\JenisBencana;
 use App\Models\LaporanBencana;
 use App\Models\LaporanMedia;
 use App\Models\StatusLaporan;
+use App\Models\SupportedRegency;
 use App\Models\Wilayah;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,27 +42,19 @@ class PengaduanController extends Controller
             return StatusLaporan::select('id', 'nama_status', 'warna')->get()->toArray();
         });
 
-        // Desa list grouped by kecamatan (from Wilayah table)
-        $desaByKecamatan = Cache::remember('desa_by_kecamatan_v2', 3600, function () {
-            return Wilayah::where('kabupaten', 'Indramayu')
-                ->whereNotNull('desa')
-                ->select('kecamatan', 'desa')
-                ->distinct()
-                ->orderBy('kecamatan')
-                ->orderBy('desa')
+        // Active kabupaten list from supported_regencies (admin-controlled)
+        $kabupatenList = Cache::remember('kabupaten_list_v2', 3600, function () {
+            return SupportedRegency::where('is_active', true)
+                ->select('code', 'name')
+                ->orderBy('name')
                 ->get()
-                ->groupBy('kecamatan')
-                ->map(function ($items) {
-                    return $items->pluck('desa')->unique()->values()->toArray();
-                })
                 ->toArray();
         });
 
         return Inertia::render('public/pengaduan/index', [
             'jenisBencana' => $jenisBencana,
             'statusList' => $statusList,
-            'kecamatanList' => $this->getKecamatanList(),
-            'desaByKecamatan' => $desaByKecamatan,
+            'kabupatenList' => $kabupatenList,
         ]);
     }
 
@@ -382,10 +375,10 @@ class PengaduanController extends Controller
             return $existing;
         }
 
-        // Create new wilayah
+        // Create new wilayah with dynamic location
         return Wilayah::create([
-            'provinsi' => 'Jawa Barat',
-            'kabupaten' => 'Indramayu',
+            'provinsi' => $data['provinsi'] ?? 'Jawa Barat',
+            'kabupaten' => $data['kabupaten'] ?? 'Indramayu',
             'kecamatan' => $data['kecamatan'],
             'desa' => $data['desa'] ?? null,
             'latitude' => $latitude,
@@ -478,33 +471,26 @@ class PengaduanController extends Controller
     }
 
     /**
-     * Get list of kecamatan in Indramayu
+     * API: Get desa list by kecamatan (optionally scoped by kabupaten)
      */
-    protected function getKecamatanList(): array
+    public function getDesaByKecamatan(string $kecamatan, Request $request): JsonResponse
     {
-        return [
-            'Anjatan', 'Arahan', 'Balongan', 'Bangodua', 'Bongas', 'Cantigi',
-            'Cikedung', 'Gabuswetan', 'Gantar', 'Haurgeulis', 'Indramayu',
-            'Jatibarang', 'Juntinyuat', 'Kandanghaur', 'Karangampel',
-            'Kedokan Bunder', 'Kertasemaya', 'Krangkeng', 'Kroya', 'Lelea',
-            'Lohbener', 'Losarang', 'Pasekan', 'Patrol', 'Sindang', 'Sliyeg',
-            'Sukagumiwang', 'Sukra', 'Terisi', 'Tukdana', 'Widasari',
-        ];
-    }
+        $kabupaten = $request->input('kabupaten');
+        $cacheKey = $kabupaten
+            ? "desa_by_kecamatan:{$kabupaten}:{$kecamatan}"
+            : "desa_by_kecamatan:all:{$kecamatan}";
 
-    /**
-     * API: Get desa list by kecamatan
-     */
-    public function getDesaByKecamatan(string $kecamatan): JsonResponse
-    {
-        $desa = Cache::remember("desa_by_kecamatan:{$kecamatan}", 3600, function () use ($kecamatan) {
-            return Wilayah::where('kabupaten', 'Indramayu')
-                ->where('kecamatan', $kecamatan)
+        $desa = Cache::remember($cacheKey, 3600, function () use ($kecamatan, $kabupaten) {
+            $query = Wilayah::where('kecamatan', $kecamatan)
                 ->whereNotNull('desa')
                 ->distinct('desa')
-                ->orderBy('desa')
-                ->pluck('desa')
-                ->toArray();
+                ->orderBy('desa');
+
+            if ($kabupaten) {
+                $query->where('kabupaten', $this->normalizeWilayahName($kabupaten));
+            }
+
+            return $query->pluck('desa')->toArray();
         });
 
         return response()->json([
@@ -530,10 +516,9 @@ class PengaduanController extends Controller
         $strippedQuery = str_replace($prefixes, '', $lowerQuery);
         $searchTerms = [$lowerQuery, $strippedQuery];
 
-        // 1. First, try to match against our Wilayah database
+        // 1. First, try to match against our Wilayah database (Indonesia-wide)
         // Check for exact/partial matches on desa/kecamatan names
-        $wilayahMatch = Wilayah::where('kabupaten', 'Indramayu')
-            ->whereNotNull('latitude')
+        $wilayahMatch = Wilayah::whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->where(function ($q) use ($searchTerms) {
                 foreach ($searchTerms as $term) {
@@ -554,21 +539,28 @@ class PengaduanController extends Controller
             ->first();
 
         if ($wilayahMatch) {
+            $parts = array_filter([
+                $wilayahMatch->desa,
+                $wilayahMatch->kecamatan,
+                $wilayahMatch->kabupaten,
+                $wilayahMatch->provinsi,
+            ]);
+
             return response()->json([
                 'success' => true,
                 'source' => 'wilayah_db',
                 'data' => [
                     'latitude' => (float) $wilayahMatch->latitude,
                     'longitude' => (float) $wilayahMatch->longitude,
-                    'display_name' => "{$wilayahMatch->desa}, {$wilayahMatch->kecamatan}, Indramayu, Jawa Barat",
+                    'display_name' => implode(', ', $parts),
                     'kecamatan' => $wilayahMatch->kecamatan,
                     'desa' => $wilayahMatch->desa,
                 ],
             ]);
         }
 
-        // 2. Fallback to Nominatim (OpenStreetMap)
-        $address = $query.', Indramayu, Jawa Barat, Indonesia';
+        // 2. Fallback to Nominatim (OpenStreetMap) — Indonesia-wide
+        $address = $query.', Indonesia';
 
         try {
             $response = Http::timeout(10)->get('https://nominatim.openstreetmap.org/search', [
@@ -591,14 +583,6 @@ class PengaduanController extends Controller
             $result = $data[0];
             $lat = (float) $result['lat'];
             $lng = (float) $result['lon'];
-
-            // Validate bounds
-            if ($lat < -6.6 || $lat > -6.1 || $lng < 107.9 || $lng > 108.6) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Lokasi di luar wilayah Kabupaten Indramayu.',
-                ], 422);
-            }
 
             return response()->json([
                 'success' => true,
@@ -630,7 +614,7 @@ class PengaduanController extends Controller
             'address' => 'required|string|max:500',
         ]);
 
-        $address = $request->input('address').', Indramayu, Jawa Barat, Indonesia';
+        $address = $request->input('address').', Indonesia';
 
         try {
             $response = Http::timeout(10)->get('https://nominatim.openstreetmap.org/search', [
@@ -680,12 +664,16 @@ class PengaduanController extends Controller
         $request->validate([
             'kecamatan' => 'required|string',
             'desa' => 'nullable|string',
+            'kabupaten' => 'nullable|string',
         ]);
 
-        $query = Wilayah::where('kabupaten', 'Indramayu')
-            ->where('kecamatan', $request->input('kecamatan'))
+        $query = Wilayah::where('kecamatan', $request->input('kecamatan'))
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
+
+        if ($request->filled('kabupaten')) {
+            $query->where('kabupaten', $this->normalizeWilayahName($request->input('kabupaten')));
+        }
 
         if ($request->filled('desa')) {
             $query->where('desa', $request->input('desa'));
@@ -709,6 +697,57 @@ class PengaduanController extends Controller
                 'desa' => $wilayah->desa,
             ],
         ]);
+    }
+
+    /**
+     * API: Get list of active kabupaten (from supported_regencies)
+     */
+    public function getKabupatenList(): JsonResponse
+    {
+        $list = Cache::remember('kabupaten_list_api_v2', 3600, function () {
+            return SupportedRegency::where('is_active', true)
+                ->select('code', 'name')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $list,
+        ]);
+    }
+
+    /**
+     * API: Get kecamatan list by kabupaten (from Wilayah table)
+     */
+    public function getKecamatanByKabupaten(string $kabupaten): JsonResponse
+    {
+        $normalized = $this->normalizeWilayahName($kabupaten);
+
+        $kecamatan = Cache::remember("kecamatan_by_kabupaten:{$normalized}", 3600, function () use ($normalized) {
+            return Wilayah::where('kabupaten', $normalized)
+                ->select('kecamatan')
+                ->distinct()
+                ->orderBy('kecamatan')
+                ->pluck('kecamatan')
+                ->toArray();
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $kecamatan,
+        ]);
+    }
+
+    /**
+     * Normalize wilayah name: "KABUPATEN INDRAMAYU" → "Indramayu"
+     */
+    protected function normalizeWilayahName(string $name): string
+    {
+        $name = preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $name);
+
+        return ucwords(strtolower(trim($name)));
     }
 }
 

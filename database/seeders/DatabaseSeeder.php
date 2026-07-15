@@ -20,10 +20,11 @@ class DatabaseSeeder extends Seeder
             WilayahSeeder::class,
         ]);
 
-        // Create test user
+        // Create admin user
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Admin',
+            'email' => 'admin@example.com',
+            'is_admin' => true,
         ]);
     }
 }

@@ -44,8 +44,8 @@ export interface KejadianStats {
 export interface KejadianIndexProps {
     reports: PaginatedResponse<Report>;
     stats: KejadianStats;
-    filters: { tanggal_mulai: string; tanggal_selesai: string; jenis_bencana: string; kecamatan: string; status: string; q: string };
-    filterOptions: { kecamatanList: Kecamatan[]; statusList: string[]; jenisList: string[] };
+    filters: { tanggal_mulai: string; tanggal_selesai: string; jenis_bencana: string; kabupaten?: string; kecamatan: string; status: string; q: string };
+    filterOptions: { kabupatenList?: string[]; kabupatenKecamatanMap?: Record<string, string[]>; kecamatanList: Kecamatan[]; statusList: string[]; jenisList: string[] };
 }
 
 export interface Activity { id: string; timestamp: string; type: 'whatsapp' | 'system' | 'ai' | 'manual'; description: string; actor?: string; }

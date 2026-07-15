@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { usePage, router } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import {
     Search,
     MapPin,
@@ -384,6 +384,8 @@ export default function TrackReport() {
 
     // Show report detail
     return (
+        <>
+        <Head title="Lacak Laporan - Disaster Intelligence" />
         <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
             <div className="max-w-3xl mx-auto">
                 {/* Header */}
@@ -645,5 +647,6 @@ export default function TrackReport() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

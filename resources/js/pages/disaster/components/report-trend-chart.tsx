@@ -1,29 +1,13 @@
-import { useState } from 'react';
 import { getDisasterLabel } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { TrendDataPoint } from '@/types';
 
-// Dummy data per disaster type for interactive filtering
-const trendByType: Record<string, number[]> = {
-    all: [12, 18, 15, 22, 28, 33, 18],
-    BANJIR: [5, 8, 6, 10, 14, 16, 9],
-    LONGSOR: [3, 4, 4, 5, 6, 8, 4],
-    KEBAKARAN: [1, 2, 2, 3, 3, 4, 2],
-    ANGIN_KENCANG: [2, 2, 1, 2, 3, 3, 2],
-    LAINNYA: [1, 2, 2, 2, 2, 2, 1],
-};
-
-const labels = ['15 Mei', '16 Mei', '17 Mei', '18 Mei', '19 Mei', '20 Mei', '21 Mei'];
-
 export function ReportTrendChart({ data }: { data: TrendDataPoint[] }) {
-    const [filterType, setFilterType] = useState('all');
-
-    const chartData = (trendByType[filterType] ?? trendByType.all).map((count, i) => ({
-        count,
-        label: data[i]?.tanggal ?? labels[i],
+    const chartData = data.map((d) => ({
+        count: d.count,
+        label: d.tanggal,
     }));
 
-    const max = Math.max(...chartData.map((d) => d.count));
+    const max = Math.max(...chartData.map((d) => d.count), 0);
     const yMax = Math.ceil(max / 10) * 10 || 10;
 
     const svgW = 320;
@@ -33,19 +17,18 @@ export function ReportTrendChart({ data }: { data: TrendDataPoint[] }) {
     const chartH = svgH - pad.top - pad.bottom;
 
     const points = chartData.map((d, i) => ({
-        x: pad.left + (i / (chartData.length - 1)) * chartW,
+        x: pad.left + (i / (Math.max(chartData.length - 1, 1))) * chartW,
         y: pad.top + chartH - (d.count / yMax) * chartH,
         value: d.count,
         label: d.label,
     }));
 
-    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-    const areaPath = `${linePath} L ${points[points.length - 1].x} ${pad.top + chartH} L ${points[0].x} ${pad.top + chartH} Z`;
+    const linePath = points.length > 0 ? points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') : `M ${pad.left} ${pad.top + chartH}`;
+    const areaPath = points.length > 0 ? `${linePath} L ${points[points.length - 1].x} ${pad.top + chartH} L ${points[0].x} ${pad.top + chartH} Z` : '';
 
     const yTicks = Array.from({ length: 6 }, (_, i) => Math.round((yMax / 5) * i));
 
-    // Line color based on filter
-    const lineColor = filterType === 'BANJIR' ? '#3B82F6' : filterType === 'LONGSOR' ? '#F59E0B' : filterType === 'KEBAKARAN' ? '#EF4444' : filterType === 'ANGIN_KENCANG' ? '#22C55E' : filterType === 'LAINNYA' ? '#8B5CF6' : '#3B82F6';
+    const lineColor = '#3B82F6';
 
     return (
         <div className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
@@ -54,19 +37,6 @@ export function ReportTrendChart({ data }: { data: TrendDataPoint[] }) {
                     <h3 className="text-sm font-bold text-slate-900">TREND LAPORAN</h3>
                     <p className="text-[10px] text-slate-500">(7 HARI TERAKHIR)</p>
                 </div>
-                <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="h-7 w-[110px] rounded-full border-slate-200 text-[10px]">
-                        <SelectValue placeholder="Semua Jenis" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Semua Jenis</SelectItem>
-                        <SelectItem value="BANJIR">Banjir</SelectItem>
-                        <SelectItem value="LONGSOR">Longsor</SelectItem>
-                        <SelectItem value="KEBAKARAN">Kebakaran</SelectItem>
-                        <SelectItem value="ANGIN_KENCANG">Angin Kencang</SelectItem>
-                        <SelectItem value="LAINNYA">Lainnya</SelectItem>
-                    </SelectContent>
-                </Select>
             </div>
 
             <div className="mt-3 flex-1">

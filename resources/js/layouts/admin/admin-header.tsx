@@ -1,7 +1,17 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Calendar, ChevronDown, LogOut, Menu, Settings, User } from 'lucide-react';
+import { Bell, Calendar, ChevronDown, LogOut, Menu, Settings, User, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
 import { useRealTimeClock } from '@/hooks/use-real-time-clock';
+
+interface Notification {
+    id: number;
+    title: string;
+    message: string;
+    type: 'success' | 'warning' | 'info';
+    read: boolean;
+    created_at: string;
+    url?: string;
+}
 
 interface AdminHeaderProps {
     sidebarOpen: boolean;
@@ -17,11 +27,29 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     '/cms/settings/system': { title: 'Pengaturan', subtitle: 'Konfigurasi sistem' },
 };
 
+const NOTIF_ICONS: Record<string, any> = {
+    success: CheckCircle,
+    warning: AlertTriangle,
+    info: FileText,
+};
+
+const NOTIF_COLORS: Record<string, string> = {
+    success: 'text-green-500',
+    warning: 'text-amber-500',
+    info: 'text-blue-500',
+};
+
 export function AdminHeader({ sidebarOpen, onToggleSidebar }: AdminHeaderProps) {
-    const { url } = usePage();
+    const { url, props } = usePage();
     const now = useRealTimeClock();
     const [profileOpen, setProfileOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+    const notifRef = useRef<HTMLDivElement>(null);
+
+    const auth = (props as any).auth?.user;
+    const notifications: Notification[] = (props as any).notifications || [];
+    const unreadCount = notifications.filter((n: Notification) => !n.read).length;
 
     const formattedDate = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     const formattedTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -30,9 +58,12 @@ export function AdminHeader({ sidebarOpen, onToggleSidebar }: AdminHeaderProps) 
     const title = currentPage?.[1]?.title ?? 'Detail Laporan';
     const subtitle = currentPage?.[1]?.subtitle ?? '';
 
+    const initials = auth?.name ? auth.name.split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase() : 'AD';
+
     useEffect(() => {
         function handleClick(e: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setProfileOpen(false);
+            if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+            if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
         }
         document.addEventListener('mousedown', handleClick);
         return () => document.removeEventListener('mousedown', handleClick);
@@ -56,25 +87,62 @@ export function AdminHeader({ sidebarOpen, onToggleSidebar }: AdminHeaderProps) 
                     <span>{formattedDate}, {formattedTime} WIB</span>
                 </div>
 
-                <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Notifikasi">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute -top-0.5 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">5</span>
-                </button>
+                {/* Notification Bell */}
+                <div className="relative" ref={notifRef}>
+                    <button onClick={() => setNotifOpen(!notifOpen)} className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Notifikasi">
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-0.5 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                        )}
+                    </button>
+                    {notifOpen && (
+                        <div className="absolute right-0 top-full mt-1 w-80 rounded-xl border border-slate-200 bg-white shadow-lg z-50">
+                            <div className="border-b border-slate-100 px-4 py-3 flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900">Notifikasi</h3>
+                                {unreadCount > 0 && <span className="text-xs text-blue-600 font-medium">{unreadCount} baru</span>}
+                            </div>
+                            <div className="max-h-80 overflow-y-auto">
+                                {notifications.length === 0 ? (
+                                    <div className="px-4 py-8 text-center text-sm text-slate-400">Tidak ada notifikasi</div>
+                                ) : (
+                                    notifications.slice(0, 10).map((n) => {
+                                        const Icon = NOTIF_ICONS[n.type] || FileText;
+                                        return (
+                                            <Link key={n.id} href={n.url || '#'} onClick={() => setNotifOpen(false)} className={`flex gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`}>
+                                                <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${NOTIF_COLORS[n.type] || 'text-slate-400'}`} />
+                                                <div className="min-w-0">
+                                                    <p className={`text-sm ${!n.read ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{n.title}</p>
+                                                    <p className="text-xs text-slate-500 truncate">{n.message}</p>
+                                                    <p className="text-[10px] text-slate-400 mt-0.5">{new Date(n.created_at).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
-                <div className="relative" ref={dropdownRef}>
+                {/* Profile Dropdown */}
+                <div className="relative" ref={profileRef}>
                     <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-100">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-xs font-bold text-white">BP</div>
+                        {auth?.avatar ? (
+                            <img src={`/storage/${auth.avatar}`} alt={auth.name} className="h-9 w-9 rounded-full object-cover" />
+                        ) : (
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-xs font-bold text-white">{initials}</div>
+                        )}
                         <div className="hidden text-left sm:block">
-                            <p className="text-sm font-medium text-slate-900">BPBD</p>
-                            <p className="text-xs text-slate-500">Kabupaten</p>
+                            <p className="text-sm font-medium text-slate-900">{auth?.name || 'Admin'}</p>
+                            <p className="text-xs text-slate-500">{auth?.email || ''}</p>
                         </div>
                         <ChevronDown className="hidden h-4 w-4 text-slate-400 sm:block" />
                     </button>
                     {profileOpen && (
                         <div className="absolute right-0 top-full mt-1 w-52 rounded-xl border border-slate-200 bg-white py-1 shadow-lg z-50">
                             <div className="border-b border-slate-100 px-4 py-3">
-                                <p className="text-sm font-semibold text-slate-900">Admin BPBD</p>
-                                <p className="text-xs text-slate-500">admin@bpbd-indramayu.go.id</p>
+                                <p className="text-sm font-semibold text-slate-900">{auth?.name || 'Admin'}</p>
+                                <p className="text-xs text-slate-500">{auth?.email || ''}</p>
                             </div>
                             <Link href="/cms/settings/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50" onClick={() => setProfileOpen(false)}><User className="h-4 w-4 text-slate-400" /> Profil Saya</Link>
                             <Link href="/cms/settings/system" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50" onClick={() => setProfileOpen(false)}><Settings className="h-4 w-4 text-slate-400" /> Pengaturan</Link>

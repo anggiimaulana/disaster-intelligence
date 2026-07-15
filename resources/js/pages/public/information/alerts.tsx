@@ -4,19 +4,20 @@ import { ArrowLeft, Bell, Search, AlertTriangle, Info, MapPin } from 'lucide-rea
 import { EthicalHero } from '@/components/ui/hero-ethical';
 import { information } from '@/routes/public';
 import ActiveAlertCard from '@/components/public/home/ActiveAlertCard';
-import { MOCK_ALERTS } from '@/data/mock/public/alerts';
+import type { PublicAlert } from '@/types/public-disaster';
 import type { PageProps } from '@/types';
 
 interface AlertsPageProps extends PageProps {
     isSimulation?: boolean;
+    alerts: PublicAlert[];
 }
 
-export default function AlertsPage({ isSimulation }: AlertsPageProps) {
+export default function AlertsPage({ isSimulation, alerts = [] }: AlertsPageProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [typeFilter, setTypeFilter] = useState('ALL');
 
-    const filteredAlerts = MOCK_ALERTS.filter((alert) => {
+    const filteredAlerts = alerts.filter((alert) => {
         const matchesSearch = 
             alert.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
             alert.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -26,8 +27,8 @@ export default function AlertsPage({ isSimulation }: AlertsPageProps) {
         return matchesSearch && matchesStatus && matchesType;
     });
 
-    const activeCount = MOCK_ALERTS.filter(a => a.status === 'AKTIF').length;
-    const warningCount = MOCK_ALERTS.filter(a => a.status === 'WASPADA').length;
+    const activeCount = alerts.filter(a => a.status === 'AKTIF').length;
+    const warningCount = alerts.filter(a => a.status === 'WASPADA').length;
 
     return (
         <>
@@ -56,7 +57,7 @@ export default function AlertsPage({ isSimulation }: AlertsPageProps) {
                                     </div>
                                     <span className="text-sm font-bold text-premium-caption">Total Peringatan</span>
                                 </div>
-                                <div className="text-3xl font-black text-premium-heading font-heading">{MOCK_ALERTS.length}</div>
+                                <div className="text-3xl font-black text-premium-heading font-heading">{alerts.length}</div>
                             </div>
                             <div className="bg-white rounded-[24px] p-6 border border-premium-border shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                                 <div className="flex items-center gap-3 mb-2">

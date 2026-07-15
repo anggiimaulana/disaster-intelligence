@@ -3,15 +3,17 @@ import { ArrowRight, MapPin } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { disasterMap } from '@/routes/public';
-import { MOCK_MARKERS } from '@/data/mock/public/alerts';
 
 const MapPreviewClient = lazy(() => import('./MapPreviewClient'));
 
 interface MapPreviewCardProps {
     markerCount: number;
+    markers?: any[];
+    mapSettings?: any;
+    disasterTypes?: any[];
 }
 
-export default function MapPreviewCard({ markerCount }: MapPreviewCardProps) {
+export default function MapPreviewCard({ markerCount, markers = [], mapSettings = {}, disasterTypes = [] }: MapPreviewCardProps) {
     const [isMounted, setIsMounted] = useState(false);
     
     useEffect(() => {
@@ -32,8 +34,8 @@ export default function MapPreviewCard({ markerCount }: MapPreviewCardProps) {
                                 Pantau Sebaran Bencana
                             </h2>
                             <p className="text-sm text-[#6B7280] leading-relaxed mb-6">
-                                Lihat peta interaktif sebaran bencana terkini di Kabupaten Indramayu.
-                                Filter berdasarkan jenis, tingkat risiko, dan kecamatan.
+                                Lihat peta interaktif sebaran bencana terkini.
+                                Filter berdasarkan jenis, tingkat risiko, dan wilayah.
                             </p>
                             <div className="flex items-center gap-2 text-sm text-[#4B5563] mb-6">
                                 <span className="font-semibold text-[#003366]">{markerCount} titik</span>
@@ -52,7 +54,11 @@ export default function MapPreviewCard({ markerCount }: MapPreviewCardProps) {
                         <div className="relative h-[240px] lg:h-[320px] w-full bg-[#E8EDF5]">
                             {isMounted && (
                                 <Suspense fallback={<div className="flex h-full w-full items-center justify-center text-sm text-gray-500">Memuat peta...</div>}>
-                                    <MapPreviewClient />
+                                    <MapPreviewClient 
+                                        markers={markers} 
+                                        mapSettings={mapSettings} 
+                                        disasterTypes={disasterTypes} 
+                                    />
                                 </Suspense>
                             )}
                         </div>

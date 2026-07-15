@@ -36,13 +36,18 @@ const statusStyles: Record<string, string> = {
 export default function Incidents({ reports, stats, filters, filterOptions }: KejadianIndexProps) {
     // Local filter state (not submitted until button click)
     const [localFilters, setLocalFilters] = useState({
-        tanggal_mulai: filters.tanggal_mulai,
-        tanggal_selesai: filters.tanggal_selesai,
-        jenis_bencana: filters.jenis_bencana,
-        kecamatan: filters.kecamatan,
-        status: filters.status,
-        q: filters.q,
+        tanggal_mulai: filters.tanggal_mulai || '',
+        tanggal_selesai: filters.tanggal_selesai || '',
+        jenis_bencana: filters.jenis_bencana || '',
+        kabupaten: filters.kabupaten || '',
+        kecamatan: filters.kecamatan || '',
+        status: filters.status || '',
+        q: filters.q || '',
     });
+
+    const filteredKecamatan = localFilters.kabupaten
+        ? (filterOptions.kabupatenKecamatanMap?.[localFilters.kabupaten] || [])
+        : (filterOptions.kecamatanList?.map((k: any) => k.nama) || []);
 
     const updateLocal = (key: string, value: string) => {
         setLocalFilters((prev) => ({ ...prev, [key]: value }));
@@ -110,6 +115,25 @@ export default function Incidents({ reports, stats, filters, filterOptions }: Ke
                         </Select>
                     </div>
 
+                    {/* Kabupaten */}
+                    <div className="flex w-full flex-col gap-1 sm:w-auto">
+                        <label className="text-[10px] font-medium text-slate-500">Kabupaten/Kota</label>
+                        <Select value={localFilters.kabupaten || 'all'} onValueChange={(v) => {
+                            const val = v === 'all' ? '' : v;
+                            setLocalFilters((prev) => ({ ...prev, kabupaten: val, kecamatan: '' }));
+                        }}>
+                            <SelectTrigger className="h-9 w-full text-[11px] sm:w-[160px]">
+                                <SelectValue placeholder="Semua Kabupaten" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua Kabupaten</SelectItem>
+                                {(filterOptions.kabupatenList || []).map((k: string) => (
+                                    <SelectItem key={k} value={k}>{k}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     {/* Kecamatan */}
                     <div className="flex w-full flex-col gap-1 sm:w-auto">
                         <label className="text-[10px] font-medium text-slate-500">Kecamatan</label>
@@ -119,7 +143,7 @@ export default function Incidents({ reports, stats, filters, filterOptions }: Ke
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Semua Kecamatan</SelectItem>
-                                {filterOptions.kecamatanList.map((k) => <SelectItem key={k.id} value={k.nama}>{k.nama}</SelectItem>)}
+                                {filteredKecamatan.map((k: string) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>

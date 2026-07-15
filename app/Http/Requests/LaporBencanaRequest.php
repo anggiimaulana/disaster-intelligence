@@ -76,6 +76,16 @@ class LaporBencanaRequest extends FormRequest
                 'max:500',
                 'min:5',
             ],
+            'kabupaten' => [
+                'required',
+                'string',
+                'max:100',
+            ],
+            'provinsi' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
             'kecamatan' => [
                 'required',
                 'string',

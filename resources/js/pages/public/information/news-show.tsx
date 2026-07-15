@@ -2,17 +2,17 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Tag, ArrowRight } from 'lucide-react';
 import { news } from '@/routes/public/information';
 import { newsShow } from '@/routes/public/information';
-import { MOCK_ARTICLES } from '@/data/mock/public/articles';
+import type { InformationArticle } from '@/types/public-disaster';
 import type { PageProps } from '@/types';
 
 interface NewsShowPageProps extends PageProps {
     isSimulation?: boolean;
     slug: string;
+    article: InformationArticle;
+    relatedArticles: InformationArticle[];
 }
 
-export default function NewsShowPage({ isSimulation, slug }: NewsShowPageProps) {
-    const article = MOCK_ARTICLES.find((a) => a.slug === slug) ?? MOCK_ARTICLES[0];
-    const relatedArticles = MOCK_ARTICLES.filter((a) => a.id !== article.id).slice(0, 3);
+export default function NewsShowPage({ isSimulation, slug, article, relatedArticles = [] }: NewsShowPageProps) {
 
     return (
         <>
@@ -60,25 +60,12 @@ export default function NewsShowPage({ isSimulation, slug }: NewsShowPageProps) 
 
                             {/* Article Body */}
                             <div className="prose prose-lg max-w-none text-premium-body font-sans leading-relaxed">
-                                <p className="text-lg leading-relaxed mb-6 font-medium text-premium-heading border-l-4 border-premium-blue-accent pl-6 bg-premium-blue-accent/5 py-4 rounded-r-xl">
-                                    {article.excerpt}
-                                </p>
-                                <p className="mb-6">
-                                    Memasuki puncak musim hujan, BPBD Kabupaten Indramayu mengimbau
-                                    seluruh warga untuk meningkatkan kewaspadaan terhadap potensi bencana
-                                    hidrometeorologi seperti banjir, angin kencang, dan tanah longsor.
-                                </p>
-                                <p className="mb-6">
-                                    Berdasarkan data dari BMKG, curah hujan di wilayah Kabupaten Indramayu
-                                    diprediksi akan meningkat hingga 40% dalam beberapa pekan ke depan.
-                                    Masyarakat diimbau untuk selalu memantau informasi cuaca terkini dan
-                                    mengikuti arahan dari petugas BPBD.
-                                </p>
-                                <p className="mb-6">
-                                    BPBD telah menyiagakan personel di setiap kecamatan dan membuka posko
-                                    siaga bencana 24 jam. Masyarakat yang membutuhkan bantuan darurat
-                                    dapat menghubungi call center BPBD di nomor (0234) XXXXX.
-                                </p>
+                                {article.excerpt && (
+                                    <p className="text-lg leading-relaxed mb-6 font-medium text-premium-heading border-l-4 border-premium-blue-accent pl-6 bg-premium-blue-accent/5 py-4 rounded-r-xl">
+                                        {article.excerpt}
+                                    </p>
+                                )}
+                                <div dangerouslySetInnerHTML={{ __html: article.content || '' }} />
                             </div>
                         </article>
 

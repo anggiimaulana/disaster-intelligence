@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\JenisBencana;
 use App\Models\LaporanBencana;
 use App\Models\StatusLaporan;
+use App\Models\SupportedRegency;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,6 +18,25 @@ class KejadianController extends Controller
 {
     public function index(Request $request): Response
     {
+        // Build kabupaten-kecamatan map from active regencies FIRST
+        $activeRegencies = SupportedRegency::where('is_active', true)
+            ->pluck('name')
+            ->map(fn ($name) => Str::title(trim(str_ireplace(['KABUPATEN', 'KOTA'], '', $name))))
+            ->toArray();
+        $kabupatenKecamatanMap = [];
+        if ($activeRegencies) {
+            $allWilayah = Wilayah::whereIn('kabupaten', $activeRegencies)
+                ->whereNotNull('kecamatan')
+                ->select('kabupaten', 'kecamatan')
+                ->distinct()
+                ->orderBy('kabupaten')
+                ->orderBy('kecamatan')
+                ->get();
+            foreach ($allWilayah as $w) {
+                $kabupatenKecamatanMap[$w->kabupaten][] = $w->kecamatan;
+            }
+        }
+
         $query = LaporanBencana::query()
             ->with(['jenisBencana:id,kode,nama_bencana,warna', 'status:id,nama_status,warna']);
 
@@ -29,7 +50,12 @@ class KejadianController extends Controller
         if ($request->filled('jenis_bencana')) {
             $query->whereHas('jenisBencana', fn ($q) => $q->where('kode', $request->jenis_bencana));
         }
-        if ($request->filled('kecamatan')) {
+        if ($request->filled('kabupaten')) {
+            $kabKec = $kabupatenKecamatanMap[$request->kabupaten] ?? [];
+            if ($kabKec) {
+                $query->whereIn('kecamatan', $kabKec);
+            }
+        } elseif ($request->filled('kecamatan')) {
             $query->where('kecamatan', $request->kecamatan);
         }
         if ($request->filled('status')) {
@@ -141,16 +167,12 @@ class KejadianController extends Controller
             ],
         ];
 
-        // Filter options
-        $kecamatanList = Wilayah::where('kabupaten', 'Indramayu')
-            ->whereNotNull('kecamatan')
-            ->distinct('kecamatan')
-            ->orderBy('kecamatan')
-            ->pluck('kecamatan')
-            ->map(function ($name, $i) {
-                return ['id' => (string) ($i + 1), 'nama' => $name, 'kabupaten' => 'Indramayu'];
-            })
-            ->toArray();
+        // Filter options — use pre-computed data from top of method
+        $kecamatanList = $allWilayah->map(function ($w) {
+            return ['id' => $w->kecamatan, 'nama' => $w->kecamatan, 'kabupaten' => $w->kabupaten];
+        })->toArray();
+
+        $kabupatenList = array_keys($kabupatenKecamatanMap);
 
         $statusList = StatusLaporan::orderBy('id')->pluck('nama_status')->toArray();
         $jenisList = JenisBencana::orderBy('kode')->pluck('kode')->toArray();
@@ -172,8 +194,10 @@ class KejadianController extends Controller
                 ],
             ],
             'stats' => $stats,
-            'filters' => $request->only(['tanggal_mulai', 'tanggal_selesai', 'jenis_bencana', 'kecamatan', 'status', 'q']),
+            'filters' => $request->only(['tanggal_mulai', 'tanggal_selesai', 'jenis_bencana', 'kabupaten', 'kecamatan', 'status', 'q']),
             'filterOptions' => [
+                'kabupatenList' => $kabupatenList,
+                'kabupatenKecamatanMap' => $kabupatenKecamatanMap,
                 'kecamatanList' => $kecamatanList,
                 'statusList' => $statusList,
                 'jenisList' => $jenisList,
@@ -278,7 +302,29 @@ class KejadianController extends Controller
         if ($request->filled('jenis_bencana')) {
             $query->whereHas('jenisBencana', fn ($q) => $q->where('kode', $request->jenis_bencana));
         }
-        if ($request->filled('kecamatan')) {
+
+        // Add kabupaten filter logic identical to index
+        if ($request->filled('kabupaten')) {
+            $activeRegencies = SupportedRegency::where('is_active', true)
+                ->pluck('name')
+                ->map(fn ($name) => Str::title(trim(str_ireplace(['KABUPATEN', 'KOTA'], '', $name))))
+                ->toArray();
+            $kabupatenKecamatanMap = [];
+            if ($activeRegencies) {
+                $allWilayah = Wilayah::whereIn('kabupaten', $activeRegencies)
+                    ->whereNotNull('kecamatan')
+                    ->select('kabupaten', 'kecamatan')
+                    ->distinct()
+                    ->get();
+                foreach ($allWilayah as $w) {
+                    $kabupatenKecamatanMap[$w->kabupaten][] = $w->kecamatan;
+                }
+            }
+            $kabKec = $kabupatenKecamatanMap[$request->kabupaten] ?? [];
+            if ($kabKec) {
+                $query->whereIn('kecamatan', $kabKec);
+            }
+        } elseif ($request->filled('kecamatan')) {
             $query->where('kecamatan', $request->kecamatan);
         }
         if ($request->filled('status')) {

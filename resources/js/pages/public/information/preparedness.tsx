@@ -2,18 +2,20 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle, Droplets, Wind, Flame, Mountain, AlertTriangle } from 'lucide-react';
 import { EthicalHero } from '@/components/ui/hero-ethical';
 import { information } from '@/routes/public';
-import { MOCK_GUIDES } from '@/data/mock/public/articles';
+import { MOCK_GUIDES } from '@/data/mock/public/articles'; // Fallback if needed, or remove
+import type { PreparednessGuide } from '@/types/public-disaster';
 import type { PageProps } from '@/types';
 
 interface PreparednessPageProps extends PageProps {
     isSimulation?: boolean;
+    guides: any[]; // Using any because the backend structure doesn't perfectly match PreparednessGuide right now
 }
 
 const ICONS: Record<string, React.ElementType> = {
     Droplets, Wind, Flame, Mountain, AlertTriangle,
 };
 
-export default function PreparednessPage({ isSimulation }: PreparednessPageProps) {
+export default function PreparednessPage({ isSimulation, guides = [] }: PreparednessPageProps) {
     return (
         <>
             <Head title="Panduan Kesiapsiagaan - Disaster Intelligence" />
@@ -31,7 +33,7 @@ export default function PreparednessPage({ isSimulation }: PreparednessPageProps
             <div className="bg-premium-bg pb-20">
                 <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
                     <div className="space-y-10 max-w-5xl mx-auto">
-                        {MOCK_GUIDES.map((guide) => {
+                        {guides.map((guide) => {
                             const Icon = ICONS[guide.icon] ?? AlertTriangle;
 
                             return (
@@ -57,40 +59,9 @@ export default function PreparednessPage({ isSimulation }: PreparednessPageProps
                                             </div>
                                         </div>
 
-                                        <div className="grid lg:grid-cols-3 gap-8 mb-8">
-                                            {[
-                                                { label: 'Sebelum Kejadian', items: guide.before },
-                                                { label: 'Saat Kejadian', items: guide.during },
-                                                { label: 'Setelah Kejadian', items: guide.after },
-                                            ].map((section) => (
-                                                <div key={section.label} className="bg-premium-bg/50 rounded-[20px] p-6 border border-premium-border/50">
-                                                    <h3 className="text-sm font-bold text-premium-heading mb-4 uppercase tracking-wider">{section.label}</h3>
-                                                    <ul className="space-y-3">
-                                                        {section.items.map((item, i) => (
-                                                            <li key={i} className="flex items-start gap-3 text-sm text-premium-body">
-                                                                <CheckCircle className="h-5 w-5 shrink-0 text-premium-success mt-0.5" />
-                                                                <span className="leading-relaxed">{item}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className="bg-amber-50 border border-amber-200/50 rounded-[24px] p-6 lg:p-8">
-                                            <h4 className="text-base font-bold text-amber-900 mb-4 font-heading flex items-center gap-2">
-                                                <AlertTriangle className="h-5 w-5 text-amber-600" />
-                                                Perlengkapan Darurat (Tas Siaga Bencana)
-                                            </h4>
-                                            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {guide.checklist.map((item, i) => (
-                                                    <div key={i} className="flex items-center gap-2.5 text-sm font-medium text-amber-900/80 bg-white/50 px-4 py-2.5 rounded-[12px] border border-amber-200/30">
-                                                        <CheckCircle className="h-4 w-4 shrink-0 text-amber-500" />
-                                                        <span>{item}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
+                                        {guide.content && (
+                                            <div className="prose prose-lg max-w-none text-premium-body mt-4" dangerouslySetInnerHTML={{ __html: guide.content }} />
+                                        )}
                                     </div>
                                 </div>
                             );

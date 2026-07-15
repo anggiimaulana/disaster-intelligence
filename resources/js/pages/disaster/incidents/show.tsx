@@ -214,7 +214,7 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
                                 <p className="text-sm text-slate-600">Rekomendasi AI</p>
                                 <p className="mt-1 text-sm text-slate-900">{report.ai_ringkasan.rekomendasi}</p>
                             </div>
-                            <Link href={`/incidents/${report.laporan_id.replace('#', '')}/analysis`} className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline">
+                            <Link href={`/cms/incidents/${report.laporan_id.replace('#', '')}/analysis`} className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:underline">
                                 Lihat Analisis AI Lengkap →
                             </Link>
                         </div>

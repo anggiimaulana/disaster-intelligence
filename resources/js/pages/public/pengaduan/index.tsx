@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -25,6 +25,14 @@ import {
     Upload,
     Waves,
     X,
+    Activity,
+    CloudRain,
+    ThermometerSun,
+    Tornado,
+    Skull,
+    MountainSnow,
+    Droplets,
+    Wind,
 } from 'lucide-react';
 import { Icon } from "@/components/ui/icon";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
@@ -61,33 +69,28 @@ interface JenisBencana {
     warna: string;
 }
 
-interface DesaByKecamatan {
-    [kecamatan: string]: string[];
+interface KabupatenItem {
+    code: string;
+    name: string;
 }
 
 interface Props {
     jenisBencana: JenisBencana[];
-    kecamatanList: string[];
-    desaByKecamatan: DesaByKecamatan;
+    kabupatenList: KabupatenItem[];
 }
 
-const DISASTER_ICONS: Record<string, React.ReactNode> = {
-    BANJIR: <Waves className="w-8 h-8 text-blue-600" />,
-    ROB: <Waves className="w-8 h-8 text-cyan-600" />,
-    ABRASI: <Mountain className="w-8 h-8 text-orange-500" />,
-    LONGSOR: <Mountain className="w-8 h-8 text-amber-700" />,
-    CUACA: <CloudLightning className="w-8 h-8 text-purple-600" />,
-    KEBAKARAN: <Flame className="w-8 h-8 text-red-600" />,
+const iconMap: Record<string, React.ElementType> = {
+    Flame, Droplets, Wind, MountainSnow, Activity, Waves, CloudRain, CloudLightning, ThermometerSun, Tornado, Skull, AlertTriangle
 };
 
-// Default center: Indramayu
-const DEFAULT_CENTER: [number, number] = [-6.3265, 108.3241];
-const DEFAULT_ZOOM = 11;
+// Default center: Indonesia
+const DEFAULT_CENTER: [number, number] = [-2.5, 118.0];
+const DEFAULT_ZOOM = 5;
 
 // Custom marker component for click handling
 const MapClickHandler = () => {
     const map = useMapEvents({
-        click(e: L.LeafMouseEvent) {
+        click(e: L.LeafletMouseEvent) {
             // Dispatch custom event with coordinates
             window.dispatchEvent(new CustomEvent('map-click', {
                 detail: { lat: e.latlng.lat, lng: e.latlng.lng }
@@ -116,7 +119,7 @@ const FlyToCenter = ({ center, zoom }: { center: [number, number] | null; zoom: 
     return null;
 };
 
-export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKecamatan }: Props) {
+export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
     const [files, setFiles] = useState<File[]>([]);
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -127,6 +130,10 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [mapKey, setMapKey] = useState(0);
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info' | 'warning'; message: string } | null>(null);
+    const [kecamatanOptions, setKecamatanOptions] = useState<string[]>([]);
+    const [desaOptions, setDesaOptions] = useState<string[]>([]);
+    const [isLoadingKecamatan, setIsLoadingKecamatan] = useState(false);
+    const [isLoadingDesa, setIsLoadingDesa] = useState(false);
 
     // Auto-dismiss notification after 5 seconds
     useEffect(() => {
@@ -149,19 +156,18 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
         judul: '',
         deskripsi: '',
         alamat: '',
+        kabupaten: '',
         kecamatan: '',
         desa: '',
+        provinsi: '',
         latitude: '',
         longitude: '',
-        waktu_kejadian_date: '',
-        waktu_kejadian_time: '',
+        waktu_kejadian_date: new Date().toISOString().split('T')[0],
+        waktu_kejadian_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
         // Honeypot fields - hidden from users, filled by bots
         website_url: '',
         contact_subject: '',
     });
-
-    // Get desa list for selected kecamatan
-    const desaList = desaByKecamatan[data.kecamatan] || [];
 
     // Auto-copy to clipboard when success
     useEffect(() => {
@@ -189,8 +195,70 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
         return () => window.removeEventListener('map-click', handleMapClick as EventListener);
     }, [setData]);
 
+    // Fetch kecamatan when kabupaten changes
+    useEffect(() => {
+        if (!data.kabupaten) {
+            setKecamatanOptions([]);
+            setDesaOptions([]);
+            setData('kecamatan', '');
+            setData('desa', '');
+            return;
+        }
+
+        const selected = kabupatenList.find(k => k.code === data.kabupaten || k.name === data.kabupaten);
+        if (!selected) return;
+
+        const kabupatenName = selected.name;
+
+        setIsLoadingKecamatan(true);
+        setData('kecamatan', '');
+        setData('desa', '');
+        setDesaOptions([]);
+
+        fetch(`/api/kecamatan/${encodeURIComponent(kabupatenName)}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    setKecamatanOptions(result.data);
+                }
+            })
+            .catch(() => {
+                setKecamatanOptions([]);
+            })
+            .finally(() => setIsLoadingKecamatan(false));
+    }, [data.kabupaten]);
+
+    // Fetch desa when kecamatan changes
+    useEffect(() => {
+        if (!data.kecamatan || !data.kabupaten) {
+            setDesaOptions([]);
+            return;
+        }
+
+        const selected = kabupatenList.find(k => k.code === data.kabupaten || k.name === data.kabupaten);
+        if (!selected) return;
+
+        setIsLoadingDesa(true);
+        setDesaOptions([]);
+
+        fetch(`/api/desa-by-kecamatan/${encodeURIComponent(data.kecamatan)}?kabupaten=${encodeURIComponent(selected.name)}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    setDesaOptions(result.data);
+                }
+            })
+            .catch(() => {
+                setDesaOptions([]);
+            })
+            .finally(() => setIsLoadingDesa(false));
+    }, [data.kecamatan, data.kabupaten]);
+
     // Get coordinates from database when kecamatan/desa selected
-    // Uses local Wilayah data — no rate limit impact
     useEffect(() => {
         if (data.kecamatan && !data.alamat) {
             const debounceTimer = setTimeout(() => {
@@ -225,7 +293,7 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
     const shareViaWhatsApp = () => {
         if (kodeLaporan) {
             const text = encodeURIComponent(
-                `Saya telah melaporkan bencana di Indramayu.\n\n` +
+                `Saya telah melaporkan bencana.\n\n` +
                 `📋 Kode Laporan: ${kodeLaporan}\n\n` +
                 `Lacak status: ${window.location.origin}/public/lacak-laporan?kode_laporan=${encodeURIComponent(kodeLaporan)}`
             );
@@ -236,7 +304,7 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
     const shareViaTelegram = () => {
         if (kodeLaporan) {
             const text = encodeURIComponent(
-                `Saya telah melaporkan bencana di Indramayu.\n\n` +
+                `Saya telah melaporkan bencana.\n\n` +
                 `📋 Kode Laporan: ${kodeLaporan}\n\n` +
                 `Lacak status: ${window.location.origin}/public/lacak-laporan?kode_laporan=${encodeURIComponent(kodeLaporan)}`
             );
@@ -256,13 +324,6 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
                     const lat = result.data.latitude;
                     const lng = result.data.longitude;
 
-                    // Validate: must be within Indramayu bounds
-                    if (!isWithinIndramayu(lat, lng)) {
-                        setNotification({ type: 'error', message: 'Lokasi di luar wilayah Kabupaten Indramayu. Silakan pilih lokasi di dalam Indramayu.' });
-                        setIsGeocoding(false);
-                        return;
-                    }
-
                     setData('latitude', lat.toFixed(6));
                     setData('longitude', lng.toFixed(6));
                     setMapKey(prev => prev + 1);
@@ -279,6 +340,8 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
         try {
             const params = new URLSearchParams({ kecamatan });
             if (desa) params.append('desa', desa);
+            const selectedKab = kabupatenList.find(k => k.code === data.kabupaten);
+            if (selectedKab) params.append('kabupaten', selectedKab.name);
             const response = await fetch(`/api/coordinates-by-location?${params}`, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
@@ -286,12 +349,6 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
             if (result.success && result.data) {
                 const lat = result.data.latitude;
                 const lng = result.data.longitude;
-
-                // Validate bounds
-                if (!isWithinIndramayu(lat, lng)) {
-                    setNotification({ type: 'error', message: 'Data lokasi tidak valid. Silakan pilih kecamatan/desa lain.' });
-                    return;
-                }
 
                 setData('latitude', lat.toFixed(6));
                 setData('longitude', lng.toFixed(6));
@@ -328,15 +385,6 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
                 const lat = result.data.latitude;
                 const lng = result.data.longitude;
 
-                // Validate: must be within Indramayu bounds (double-check)
-                if (!isWithinIndramayu(lat, lng)) {
-                    setData('latitude', '');
-                    setData('longitude', '');
-                    setNotification({ type: 'error', message: 'Lokasi yang Anda cari berada di luar wilayah Kabupaten Indramayu. Silakan cari lokasi di dalam Indramayu.' });
-                    setIsGeocoding(false);
-                    return;
-                }
-
                 setData('latitude', lat.toFixed(6));
                 setData('longitude', lng.toFixed(6));
                 setMapKey(prev => prev + 1);
@@ -358,10 +406,7 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
         }
     };
 
-    // Indramayu bounds: approximately lat -6.6 to -6.1, lng 107.9 to 108.6
-    const isWithinIndramayu = (lat: number, lng: number): boolean => {
-        return lat >= -6.6 && lat <= -6.1 && lng >= 107.9 && lng <= 108.6;
-    };
+
 
     // Use current location (Geolocation API)
     const useCurrentLocation = async () => {
@@ -378,15 +423,6 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
             async (position) => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-
-                // Validate bounds
-                if (!isWithinIndramayu(lat, lng)) {
-                    setData('latitude', '');
-                    setData('longitude', '');
-                    setNotification({ type: 'error', message: 'Lokasi Anda saat ini berada di luar Kabupaten Indramayu. Fitur ini hanya untuk lokasi di dalam Indramayu.' });
-                    setIsGeocoding(false);
-                    return;
-                }
 
                 setData('latitude', lat.toFixed(6));
                 setData('longitude', lng.toFixed(6));
@@ -443,6 +479,7 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
         if (!data.judul || data.judul.length < 5) return 'Judul laporan wajib diisi (min. 5 karakter).';
         if (!data.deskripsi || data.deskripsi.length < 10) return 'Deskripsi kejadian wajib diisi (min. 10 karakter).';
         if (!data.alamat || data.alamat.length < 5) return 'Alamat lengkap wajib diisi.';
+        if (!data.kabupaten) return 'Silakan pilih kabupaten/kota.';
         if (!data.kecamatan) return 'Silakan pilih kecamatan.';
         if (!data.latitude || !data.longitude) return 'Silakan tandai lokasi di peta terlebih dahulu.';
         return null;
@@ -502,13 +539,17 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
                     judul: '',
                     deskripsi: '',
                     alamat: '',
+                    kabupaten: '',
                     kecamatan: '',
                     desa: '',
+                    provinsi: '',
                     latitude: '',
                     longitude: '',
                     waktu_kejadian_date: '',
                     waktu_kejadian_time: '',
                 });
+                setKecamatanOptions([]);
+                setDesaOptions([]);
                 setFiles([]);
             } else {
                 // Handle 422 validation errors
@@ -537,6 +578,7 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
         || !data.judul || data.judul.length < 5
         || !data.deskripsi || data.deskripsi.length < 10
         || !data.alamat || data.alamat.length < 5
+        || !data.kabupaten
         || !data.kecamatan
         || !data.latitude || !data.longitude;
 
@@ -629,6 +671,7 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
 
     return (
         <>
+            <Head title="Lapor Bencana - Disaster Intelligence" />
             {notification && createPortal(
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2147483647, pointerEvents: 'none' }}>
                     <div style={{ position: 'absolute', bottom: '24px', right: '24px', maxWidth: '24rem', pointerEvents: 'auto' }}
@@ -761,7 +804,16 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
                                             onChange={(e) => setData('jenis_bencana_id', e.target.value)}
                                             className="sr-only"
                                         />
-                                        {DISASTER_ICONS[jenis.kode] || <AlertTriangle className="w-8 h-8 text-gray-400" />}
+                                        {jenis.icon && iconMap[jenis.icon] ? (
+                                            {
+                                                render: () => {
+                                                    const IconComponent = iconMap[jenis.icon];
+                                                    return <IconComponent className="w-8 h-8" style={{ color: jenis.warna || '#9ca3af' }} />;
+                                                }
+                                            }.render()
+                                        ) : (
+                                            <AlertTriangle className="w-8 h-8 text-gray-400" />
+                                        )}
                                         <span className="text-sm font-medium text-gray-700">{jenis.nama_bencana}</span>
                                         {data.jenis_bencana_id === jenis.id.toString() && (
                                             <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-blue-600" />
@@ -848,23 +900,53 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Kabupaten/Kota <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={data.kabupaten}
+                                    onChange={(e) => {
+                                        setData('kabupaten', e.target.value);
+                                        const selected = kabupatenList.find(k => k.code === e.target.value || k.name === e.target.value);
+                                        setData('provinsi', selected ? '' : '');
+                                    }}
+                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                        errors.kabupaten ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                >
+                                    <option value="">Pilih Kabupaten/Kota</option>
+                                    {kabupatenList.map((kab) => (
+                                        <option key={kab.code} value={kab.code}>{kab.name}</option>
+                                    ))}
+                                </select>
+                                {errors.kabupaten && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.kabupaten}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Kecamatan <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     value={data.kecamatan}
                                     onChange={(e) => {
                                         setData('kecamatan', e.target.value);
-                                        // Reset desa when kecamatan changes
                                         setData('desa', '');
                                     }}
                                     className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                                         errors.kecamatan ? 'border-red-500' : 'border-gray-300'
                                     }`}
+                                    disabled={!data.kabupaten || isLoadingKecamatan}
                                 >
-                                    <option value="">Pilih Kecamatan</option>
-                                    {kecamatanList.map((kec) => (
+                                    <option value="">
+                                        {isLoadingKecamatan ? 'Memuat...' : 'Pilih Kecamatan'}
+                                    </option>
+                                    {kecamatanOptions.map((kec) => (
                                         <option key={kec} value={kec}>{kec}</option>
                                     ))}
+                                    {!isLoadingKecamatan && kecamatanOptions.length === 0 && data.kabupaten && (
+                                        <option value="" disabled>Tidak ada data kecamatan</option>
+                                    )}
                                 </select>
                                 {errors.kecamatan && (
                                     <p className="text-red-500 text-xs mt-1">{errors.kecamatan}</p>
@@ -879,16 +961,18 @@ export default function PengaduanIndex({ jenisBencana, kecamatanList, desaByKeca
                                     value={data.desa}
                                     onChange={(e) => setData('desa', e.target.value)}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    disabled={desaList.length === 0}
+                                    disabled={!data.kecamatan || isLoadingDesa}
                                 >
-                                    <option value="">Pilih Desa/Kelurahan</option>
-                                    {desaList.map((desa) => (
+                                    <option value="">
+                                        {isLoadingDesa ? 'Memuat...' : 'Pilih Desa/Kelurahan'}
+                                    </option>
+                                    {desaOptions.map((desa) => (
                                         <option key={desa} value={desa}>{desa}</option>
                                     ))}
-                                    {desaList.length === 0 && data.kecamatan && (
+                                    {!isLoadingDesa && desaOptions.length === 0 && data.kecamatan && (
                                         <option value="" disabled>Tidak ada data desa untuk kecamatan ini</option>
                                     )}
-                                    {desaList.length === 0 && !data.kecamatan && (
+                                    {!isLoadingDesa && desaOptions.length === 0 && !data.kecamatan && (
                                         <option value="" disabled>Pilih kecamatan terlebih dahulu</option>
                                     )}
                                 </select>

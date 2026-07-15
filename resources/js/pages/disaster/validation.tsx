@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 
 interface PageProps {
+    [key: string]: unknown;
     laporan: {
         data: Array<{
             id: number;
@@ -131,7 +132,16 @@ export default function Validation() {
             if (result.success) {
                 setValidationResult({ hasil, catatan: validationResult?.catatan || '' });
                 // Refresh data
-                router.reload({ only: ['laporan'] });
+                router.reload({
+                    only: ['laporan'],
+                    onSuccess: (page) => {
+                        const updatedLaporan = (page.props as PageProps).laporan;
+                        const updatedReport = updatedLaporan.data.find((r) => r.id === selectedId);
+                        if (updatedReport) {
+                            setSelectedReport(updatedReport);
+                        }
+                    },
+                });
             } else {
                 alert(result.message || 'Terjadi kesalahan');
             }
@@ -159,7 +169,16 @@ export default function Validation() {
             const result = await response.json();
 
             if (result.success) {
-                router.reload({ only: ['laporan'] });
+                router.reload({
+                    only: ['laporan'],
+                    onSuccess: (page) => {
+                        const updatedLaporan = (page.props as PageProps).laporan;
+                        const updatedReport = updatedLaporan.data.find((r) => r.id === selectedId);
+                        if (updatedReport) {
+                            setSelectedReport(updatedReport);
+                        }
+                    },
+                });
             }
         } catch (error) {
             alert('Terjadi kesalahan koneksi');
@@ -408,8 +427,8 @@ export default function Validation() {
                                         </div>
                                         <div>
                                             <span className="text-blue-600">Validasi Admin:</span>
-                                            <span className={selectedReport.validasi_ai ? 'text-green-600' : 'text-slate-400'}>
-                                                {selectedReport.validasi_ai ? 'Completed' : 'Pending'}
+                                            <span className={selectedReport.validasi_admin ? 'text-green-600' : 'text-slate-400'}>
+                                                {selectedReport.validasi_admin ? 'Completed' : 'Pending'}
                                             </span>
                                         </div>
                                     </div>

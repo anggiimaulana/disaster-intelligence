@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Peringatan;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendN8nWebhook;
 use App\Models\EarlyWarning;
+use App\Models\JenisBencana;
+use App\Models\SupportedRegency;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -104,6 +108,9 @@ class PeringatanController extends Controller
             ->map(function ($a) {
                 return [
                     'id' => (string) $a->id,
+                    'jenis_bencana_id' => (string) $a->jenis_bencana_id,
+                    'level_warning' => $a->level_warning,
+                    'pesan' => $a->pesan,
                     'judul' => $a->pesan ?? $a->wilayah,
                     'wilayah' => $a->laporan?->kecamatan ?? $a->wilayah,
                     'tingkat' => $this->mapWarningLevel($a->level_warning),
@@ -178,6 +185,9 @@ class PeringatanController extends Controller
 
         $trendData = array_values($trendDays);
 
+        $jenisBencana = JenisBencana::select('id', 'nama_bencana')->get();
+        $supportedRegencies = SupportedRegency::where('is_active', true)->orderBy('name')->get();
+
         return Inertia::render('disaster/alerts', [
             'stats' => $stats,
             'activeAlerts' => $activeAlerts,
@@ -186,6 +196,8 @@ class PeringatanController extends Controller
             'targetNotifikasi' => $targetNotifikasi,
             'mapMarkers' => $mapMarkers,
             'trendData' => $trendData,
+            'jenisBencana' => $jenisBencana,
+            'supportedRegencies' => $supportedRegencies,
         ]);
     }
 
@@ -197,5 +209,53 @@ class PeringatanController extends Controller
             'Siaga' => 'RENDAH',
             default => 'AMAN',
         };
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'jenis_bencana_id' => 'required|exists:jenis_bencana,id',
+            'level_warning' => 'required|in:Siaga,Waspada,Awas',
+            'wilayah' => 'required|string|max:255',
+            'pesan' => 'required|string',
+            'status' => 'required|in:aktif,selesai',
+        ]);
+
+        $alert = EarlyWarning::create($validated);
+
+        $alert->load('jenisBencana');
+
+        SendN8nWebhook::dispatch('alert_created', [
+            'alert_id' => $alert->id,
+            'jenis_bencana' => $alert->jenisBencana?->nama_bencana,
+            'level_warning' => $alert->level_warning,
+            'wilayah' => $alert->wilayah,
+            'pesan' => $alert->pesan,
+            'status' => $alert->status,
+        ]);
+
+        return back()->with('success', 'Peringatan dini berhasil ditambahkan.');
+    }
+
+    public function update(Request $request, EarlyWarning $alert)
+    {
+        $validated = $request->validate([
+            'jenis_bencana_id' => 'required|exists:jenis_bencana,id',
+            'level_warning' => 'required|in:Siaga,Waspada,Awas',
+            'wilayah' => 'required|string|max:255',
+            'pesan' => 'required|string',
+            'status' => 'required|in:aktif,selesai',
+        ]);
+
+        $alert->update($validated);
+
+        return back()->with('success', 'Peringatan dini berhasil diperbarui.');
+    }
+
+    public function destroy(EarlyWarning $alert)
+    {
+        $alert->delete();
+
+        return back()->with('success', 'Peringatan dini berhasil dihapus.');
     }
 }

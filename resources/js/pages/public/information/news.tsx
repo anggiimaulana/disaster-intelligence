@@ -3,14 +3,15 @@ import { ArrowLeft, Calendar, ArrowRight } from 'lucide-react';
 import { EthicalHero } from '@/components/ui/hero-ethical';
 import { information } from '@/routes/public';
 import { newsShow } from '@/routes/public/information';
-import { MOCK_ARTICLES } from '@/data/mock/public/articles';
+import type { InformationArticle } from '@/types/public-disaster';
 import type { PageProps } from '@/types';
 
 interface NewsPageProps extends PageProps {
     isSimulation?: boolean;
+    articles: InformationArticle[];
 }
 
-export default function NewsPage({ isSimulation }: NewsPageProps) {
+export default function NewsPage({ isSimulation, articles = [] }: NewsPageProps) {
     return (
         <>
             <Head title="Berita & Informasi - Disaster Intelligence" />
@@ -28,7 +29,7 @@ export default function NewsPage({ isSimulation }: NewsPageProps) {
             <div className="bg-premium-bg pb-20">
                 <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {MOCK_ARTICLES.map((article) => (
+                        {articles.map((article) => (
                             <Link
                                 key={article.id}
                                 href={newsShow({ slug: article.slug })}

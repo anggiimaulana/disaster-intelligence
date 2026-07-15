@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EarlyWarning;
 use App\Models\JenisBencana;
 use App\Models\LaporanBencana;
+use App\Models\SupportedRegency;
 use App\Models\Wilayah;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -17,78 +18,7 @@ class DashboardController extends Controller
     public function index(): Response
     {
         // Real stats from database
-        $stats = Cache::remember('dashboard:stats', 60, function () {
-            $now = now();
-            $lastWeek = $now->copy()->subDays(6)->startOfDay();
-
-            return [
-                'totalLaporan' => [
-                    'value' => LaporanBencana::count(),
-                    'trend' => LaporanBencana::selectRaw('DATE(created_at) as date, count(*) as count')
-                        ->where('created_at', '>=', $lastWeek)
-                        ->groupBy('date')
-                        ->orderBy('date')
-                        ->pluck('count', 'date')
-                        ->map(fn ($c) => (int) $c)
-                        ->values()
-                        ->toArray(),
-                ],
-                'belumDiverifikasi' => [
-                    'value' => LaporanBencana::where('status_id', 1)->count(),
-                    'trend' => LaporanBencana::where('status_id', 1)
-                        ->selectRaw('DATE(created_at) as date, count(*) as count')
-                        ->where('created_at', '>=', $lastWeek)
-                        ->groupBy('date')
-                        ->orderBy('date')
-                        ->pluck('count', 'date')
-                        ->map(fn ($c) => (int) $c)
-                        ->values()
-                        ->toArray(),
-                    'pct' => LaporanBencana::count() > 0
-                        ? round((LaporanBencana::where('status_id', 1)->count() / LaporanBencana::count()) * 100)
-                        : 0,
-                ],
-                'warningAktif' => [
-                    'value' => EarlyWarning::where('status', 'aktif')->count(),
-                    'trend' => EarlyWarning::where('status', 'aktif')
-                        ->selectRaw('DATE(created_at) as date, count(*) as count')
-                        ->where('created_at', '>=', $lastWeek)
-                        ->groupBy('date')
-                        ->orderBy('date')
-                        ->pluck('count', 'date')
-                        ->map(fn ($c) => (int) $c)
-                        ->values()
-                        ->toArray(),
-                ],
-                'laporanValid' => [
-                    'value' => LaporanBencana::where('validasi_admin', true)->count(),
-                    'trend' => LaporanBencana::where('validasi_admin', true)
-                        ->selectRaw('DATE(created_at) as date, count(*) as count')
-                        ->where('created_at', '>=', $lastWeek)
-                        ->groupBy('date')
-                        ->orderBy('date')
-                        ->pluck('count', 'date')
-                        ->map(fn ($c) => (int) $c)
-                        ->values()
-                        ->toArray(),
-                    'pct' => LaporanBencana::count() > 0
-                        ? round((LaporanBencana::where('validasi_admin', true)->count() / LaporanBencana::count()) * 100)
-                        : 0,
-                ],
-                'pengirimLaporan' => [
-                    'value' => LaporanBencana::distinct('whatsapp_message_id')->count(),
-                    'trend' => LaporanBencana::selectRaw('DATE(created_at) as date, count(DISTINCT whatsapp_message_id) as count')
-                        ->where('created_at', '>=', $lastWeek)
-                        ->whereNotNull('whatsapp_message_id')
-                        ->groupBy('date')
-                        ->orderBy('date')
-                        ->pluck('count', 'date')
-                        ->map(fn ($c) => (int) $c)
-                        ->values()
-                        ->toArray(),
-                ],
-            ];
-        });
+        $stats = $this->getDashboardStats();
 
         // Map markers from real reports with coordinates
         $mapMarkers = Cache::remember('dashboard:map_markers', 300, function () {
@@ -139,14 +69,28 @@ class DashboardController extends Controller
             ->toArray();
 
         // Trend data (last 7 days)
-        $trendData = LaporanBencana::selectRaw('DATE(created_at) as tanggal, count(*) as count')
+        $baseTrendData = collect();
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $baseTrendData->put($date, [
+                'tanggal' => Carbon::parse($date)->format('d M'),
+                'count' => 0,
+            ]);
+        }
+
+        $trendRecords = LaporanBencana::selectRaw('DATE(created_at) as tanggal, count(*) as count')
             ->where('created_at', '>=', now()->copy()->subDays(6)->startOfDay())
             ->groupBy('tanggal')
-            ->orderBy('tanggal')
-            ->pluck('count', 'tanggal')
-            ->map(fn ($c, $t) => ['tanggal' => Carbon::parse($t)->format('d M'), 'count' => (int) $c])
-            ->values()
-            ->toArray();
+            ->pluck('count', 'tanggal');
+
+        foreach ($trendRecords as $date => $count) {
+            if ($baseTrendData->has($date)) {
+                $item = $baseTrendData->get($date);
+                $item['count'] = (int) $count;
+                $baseTrendData->put($date, $item);
+            }
+        }
+        $trendData = $baseTrendData->values()->toArray();
 
         // Reports by disaster type
         $laporanByJenis = LaporanBencana::with('jenisBencana:id,kode,nama_bencana,warna')
@@ -198,13 +142,24 @@ class DashboardController extends Controller
         ];
 
         // Filter options
-        $kecamatanList = Wilayah::where('kabupaten', 'Indramayu')
+        $activeRegencies = SupportedRegency::where('is_active', true)->pluck('name')
+            ->map(fn ($name) => preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $name))
+            ->map(fn ($name) => ucwords(strtolower(trim($name))))
+            ->toArray();
+
+        $kecamatanList = Wilayah::whereIn('kabupaten', $activeRegencies)
             ->whereNotNull('kecamatan')
-            ->distinct('kecamatan')
+            ->distinct()
+            ->select('kecamatan', 'kabupaten')
+            ->orderBy('kabupaten')
             ->orderBy('kecamatan')
-            ->pluck('kecamatan')
-            ->map(function ($name, $i) {
-                return ['id' => (string) ($i + 1), 'nama' => $name, 'kabupaten' => 'Indramayu'];
+            ->get()
+            ->map(function ($item, $i) {
+                return [
+                    'id' => (string) ($i + 1),
+                    'nama' => $item->kecamatan,
+                    'kabupaten' => $item->kabupaten,
+                ];
             })
             ->toArray();
 
@@ -242,5 +197,76 @@ class DashboardController extends Controller
             $score >= 40 => '#F59E0B',
             default => '#22C55E',
         };
+    }
+
+    private function getDashboardStats(): array
+    {
+        return Cache::remember('dashboard:stats', 60, function () {
+            $now = now();
+            $lastWeek = $now->copy()->subDays(6)->startOfDay();
+
+            $baseTrend = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $baseTrend[now()->subDays($i)->format('Y-m-d')] = 0;
+            }
+
+            return [
+                'totalLaporan' => [
+                    'value' => LaporanBencana::count(),
+                    'trend' => array_values(array_replace($baseTrend, LaporanBencana::selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->toArray())),
+                ],
+                'belumDiverifikasi' => [
+                    'value' => LaporanBencana::where('status_id', 1)->count(),
+                    'trend' => array_values(array_replace($baseTrend, LaporanBencana::where('status_id', 1)
+                        ->selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->toArray())),
+                    'pct' => LaporanBencana::count() > 0
+                        ? round((LaporanBencana::where('status_id', 1)->count() / LaporanBencana::count()) * 100)
+                        : 0,
+                ],
+                'warningAktif' => [
+                    'value' => EarlyWarning::where('status', 'aktif')->count(),
+                    'trend' => array_values(array_replace($baseTrend, EarlyWarning::where('status', 'aktif')
+                        ->selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->toArray())),
+                ],
+                'laporanValid' => [
+                    'value' => LaporanBencana::where('validasi_admin', true)->count(),
+                    'trend' => array_values(array_replace($baseTrend, LaporanBencana::where('validasi_admin', true)
+                        ->selectRaw('DATE(created_at) as date, count(*) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->groupBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->toArray())),
+                    'pct' => LaporanBencana::count() > 0
+                        ? round((LaporanBencana::where('validasi_admin', true)->count() / LaporanBencana::count()) * 100)
+                        : 0,
+                ],
+                'pengirimLaporan' => [
+                    'value' => LaporanBencana::distinct('whatsapp_message_id')->count(),
+                    'trend' => array_values(array_replace($baseTrend, LaporanBencana::selectRaw('DATE(created_at) as date, count(DISTINCT whatsapp_message_id) as count')
+                        ->where('created_at', '>=', $lastWeek)
+                        ->whereNotNull('whatsapp_message_id')
+                        ->groupBy('date')
+                        ->pluck('count', 'date')
+                        ->map(fn ($c) => (int) $c)
+                        ->toArray())),
+                ],
+            ];
+        });
     }
 }

@@ -10,6 +10,8 @@ class CvAnalysis extends Model
 {
     use HasFactory;
 
+    protected $table = 'cv_analysis';
+
     protected $fillable = [
         'laporan_media_id',
         'detected_object',

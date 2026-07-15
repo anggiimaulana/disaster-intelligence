@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import { ChevronDown, Search } from 'lucide-react';
 import { EthicalHero } from '@/components/ui/hero-ethical';
-import { MOCK_FAQS } from '@/data/mock/public/articles';
+import type { FaqItem } from '@/types/public-disaster';
 import type { PageProps } from '@/types';
 
 interface FaqPageProps extends PageProps {
     isSimulation?: boolean;
+    faqs: FaqItem[];
 }
 
-export default function FaqPage({ isSimulation }: FaqPageProps) {
+export default function FaqPage({ isSimulation, faqs = [] }: FaqPageProps) {
     const [search, setSearch] = useState('');
     const [openId, setOpenId] = useState<string | null>(null);
 
-    const filtered = MOCK_FAQS.filter(
+    const filtered = faqs.filter(
         (faq) =>
             faq.question.toLowerCase().includes(search.toLowerCase()) ||
             faq.answer.toLowerCase().includes(search.toLowerCase()),

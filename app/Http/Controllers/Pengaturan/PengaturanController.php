@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Pengaturan;
 
 use App\Http\Controllers\Controller;
 use App\Models\JenisBencana;
+use App\Models\Setting;
 use App\Models\StatusLaporan;
+use App\Models\SupportedRegency;
 use App\Models\Wilayah;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -55,12 +57,19 @@ class PengaturanController extends Controller
         ];
 
         // Master data counts
+        $activeRegencies = SupportedRegency::where('is_active', true)->pluck('name')
+            ->map(fn ($name) => preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $name))
+            ->map(fn ($name) => ucwords(strtolower(trim($name))))
+            ->toArray();
+
         $masterDataStats = [
-            'kecamatan_count' => Wilayah::where('kabupaten', 'Indramayu')->distinct('kecamatan')->count('kecamatan'),
-            'desa_count' => Wilayah::where('kabupaten', 'Indramayu')->whereNotNull('desa')->distinct('desa')->count('desa'),
+            'kecamatan_count' => Wilayah::whereIn('kabupaten', $activeRegencies)->distinct('kecamatan')->count('kecamatan'),
+            'desa_count' => Wilayah::whereIn('kabupaten', $activeRegencies)->whereNotNull('desa')->distinct('desa')->count('desa'),
             'jenis_bencana_count' => JenisBencana::count(),
             'status_laporan_count' => StatusLaporan::count(),
         ];
+
+        $appSettings = Setting::pluck('value', 'key')->toArray();
 
         return Inertia::render('disaster/settings', [
             'systemInfo' => $systemInfo,
@@ -68,12 +77,18 @@ class PengaturanController extends Controller
             'riskThresholds' => $riskThresholds,
             'notificationSettings' => $notificationSettings,
             'masterDataStats' => $masterDataStats,
+            'appSettings' => $appSettings,
         ]);
     }
 
     public function getKecamatanDesa(): JsonResponse
     {
-        $data = Wilayah::where('kabupaten', 'Indramayu')
+        $activeRegencies = SupportedRegency::where('is_active', true)->pluck('name')
+            ->map(fn ($name) => preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $name))
+            ->map(fn ($name) => ucwords(strtolower(trim($name))))
+            ->toArray();
+
+        $data = Wilayah::whereIn('kabupaten', $activeRegencies)
             ->whereNotNull('kecamatan')
             ->whereNotNull('desa')
             ->select('kecamatan', 'desa', 'latitude', 'longitude')
@@ -119,8 +134,14 @@ class PengaturanController extends Controller
 
     public function getMasterDataWilayah(): JsonResponse
     {
-        $wilayah = Wilayah::where('kabupaten', 'Indramayu')
+        $activeRegencies = SupportedRegency::where('is_active', true)->pluck('name')
+            ->map(fn ($name) => preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $name))
+            ->map(fn ($name) => ucwords(strtolower(trim($name))))
+            ->toArray();
+
+        $wilayah = Wilayah::whereIn('kabupaten', $activeRegencies)
             ->select('id', 'provinsi', 'kabupaten', 'kecamatan', 'desa', 'latitude', 'longitude')
+            ->orderBy('kabupaten')
             ->orderBy('kecamatan')
             ->orderBy('desa')
             ->get();

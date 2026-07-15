@@ -12,7 +12,7 @@ interface PublicLayoutProps {
 
 export default function PublicLayout({ children, overlayHeader, isSimulation = true }: PublicLayoutProps) {
     const { component } = usePage();
-    const resolvedOverlayHeader = overlayHeader ?? component === 'public/home' ?? false;
+    const resolvedOverlayHeader = overlayHeader ?? (component === 'public/home');
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {

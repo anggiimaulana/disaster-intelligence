@@ -18,7 +18,7 @@ export default function Dashboard({ stats, mapMarkers, laporanTerbaru, trendData
             {/* Map + Latest Reports — SIDE BY SIDE on desktop, stacked on mobile */}
             <div className="mt-5 flex flex-col gap-5 lg:flex-row">
                 <div className="min-w-0 flex-1 min-h-[400px]">
-                    <EventMap markers={mapMarkers} filters={filters} />
+                    <EventMap markers={mapMarkers} filters={filters} laporanByJenis={laporanByJenis} />
                 </div>
                 <div className="w-full flex-shrink-0 lg:w-[320px] xl:w-[340px]">
                     <LatestReports reports={laporanTerbaru} />

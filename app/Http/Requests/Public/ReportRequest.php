@@ -15,9 +15,15 @@ class ReportRequest extends FormRequest
     {
         return [
             'type' => ['required', 'string', 'in:BANJIR,LONGSOR,KEBAKARAN,ANGIN_KENCANG,LAINNYA'],
-            'location' => ['required', 'string', 'max:255'],
-            'district' => ['required', 'string', 'max:100'],
-            'village' => ['required', 'string', 'max:100'],
+            'regency_code' => ['required', 'string', 'max:10'],
+            'regency_name' => ['required', 'string', 'max:100'],
+            'district_code' => ['required', 'string', 'max:15'],
+            'district_name' => ['required', 'string', 'max:100'],
+            'village_code' => ['required', 'string', 'max:20'],
+            'village_name' => ['required', 'string', 'max:100'],
+            'address_detail' => ['required', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
             'description' => ['required', 'string', 'max:2000'],
             'reporter_name' => ['required', 'string', 'max:100'],
             'reporter_phone' => ['required', 'string', 'max:20'],

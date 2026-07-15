@@ -9,31 +9,31 @@ import 'leaflet/dist/leaflet.css';
 interface EventMapProps {
     markers: MapMarker[];
     filters: DashboardProps['filters'];
+    laporanByJenis?: Array<{ type: string; label: string; count: number; color: string }>;
 }
 
-const legendItems = [
-    { type: 'BANJIR', label: 'Banjir', color: '#3B82F6', icon: Waves },
-    { type: 'LONGSOR', label: 'Longsor', color: '#F59E0B', icon: Mountain },
-    { type: 'KEBAKARAN', label: 'Kebakaran', color: '#EF4444', icon: Flame },
-    { type: 'ANGIN_KENCANG', label: 'Angin Kencang', color: '#22C55E', icon: Wind },
-    { type: 'LAINNYA', label: 'Lainnya', color: '#8B5CF6', icon: MoreHorizontal },
-];
+const DEFAULT_COLORS: Record<string, string> = {
+    BANJIR: '#3B82F6',
+    LONGSOR: '#F59E0B',
+    KEBAKARAN: '#EF4444',
+    ABRAASI: '#FF9800',
+    ROB: '#00BCD4',
+    CUACA: '#9C27B0',
+    LAINNYA: '#8B5CF6',
+};
 
-function getMarkerColor(type: string): string {
-    const map: Record<string, string> = {
-        BANJIR: '#3B82F6',
-        LONGSOR: '#F59E0B',
-        KEBAKARAN: '#EF4444',
-        ANGIN_KENCANG: '#22C55E',
-        LAINNYA: '#8B5CF6',
-    };
-    return map[type] ?? '#94A3B8';
+function getMarkerColor(type: string, byJenis?: Array<{ type: string; color: string }>): string {
+    if (byJenis) {
+        const found = byJenis.find((j) => j.type === type);
+        if (found) return found.color;
+    }
+    return DEFAULT_COLORS[type] ?? '#94A3B8';
 }
 
 const INDRAMAYU_CENTER: [number, number] = [-6.42, 108.20];
 const INDRAMAYU_ZOOM = 10;
 
-export function EventMap({ markers, filters }: EventMapProps) {
+export function EventMap({ markers, filters, laporanByJenis }: EventMapProps) {
     const [selectedType, setSelectedType] = useState('all');
     const [selectedKecamatan, setSelectedKecamatan] = useState('all');
 
@@ -72,14 +72,11 @@ export function EventMap({ markers, filters }: EventMapProps) {
             <div className="relative h-[350px] w-full sm:h-[400px]">
                 {/* Legend overlay */}
                 <div className="absolute top-3 left-3 z-[1000] space-y-1.5 rounded-xl bg-white/95 p-3 shadow-lg backdrop-blur-sm border border-slate-100">
-                    {legendItems.map((item) => {
-                        const Icon = item.icon;
-                        const count = countByType[item.type] ?? 0;
+                    {(laporanByJenis && laporanByJenis.length > 0 ? laporanByJenis : []).map((item) => {
+                        const count = countByType[item.type] ?? item.count ?? 0;
                         return (
                             <div key={item.type} className="flex items-center gap-2">
-                                <div className="flex h-5 w-5 items-center justify-center rounded" style={{ backgroundColor: item.color + '20' }}>
-                                    <Icon className="h-3 w-3" style={{ color: item.color }} />
-                                </div>
+                                <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                                 <span className="text-[10px] font-medium text-slate-700">{item.label}</span>
                                 <span className="text-[10px] font-bold text-slate-900">{count}</span>
                             </div>
@@ -105,7 +102,7 @@ export function EventMap({ markers, filters }: EventMapProps) {
                             key={marker.id}
                             center={[marker.lat, marker.lng]}
                             radius={9}
-                            fillColor={getMarkerColor(marker.type)}
+                            fillColor={getMarkerColor(marker.type, laporanByJenis)}
                             fillOpacity={0.85}
                             color="#ffffff"
                             weight={2.5}

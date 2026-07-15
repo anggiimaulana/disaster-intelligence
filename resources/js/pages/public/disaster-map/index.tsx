@@ -4,14 +4,10 @@ import {
     ArrowLeft,
     AlertTriangle,
     MapPin,
-    Waves,
-    Mountain,
-    Flame,
-    Wind,
-    MoreHorizontal,
     Activity,
     Map as MapIcon,
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { home, laporBencana } from '@/routes';
 import { getDisasterLabel } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,19 +20,14 @@ const DisasterMapClient = lazy(() => import('./DisasterMapClient'));
 
 interface DisasterMapPageProps extends PageProps {
     isSimulation?: boolean;
+    markers?: any[];
+    mapSettings?: any;
+    disasterTypes?: any[];
 }
 
-const DISASTER_TYPES = ['BANJIR', 'LONGSOR', 'KEBAKARAN', 'ANGIN_KENCANG', 'LAINNYA'] as const;
 
-const legendItems = [
-    { type: 'BANJIR', label: 'Banjir', color: '#1E88FF', icon: Waves },
-    { type: 'LONGSOR', label: 'Longsor', color: '#F59E0B', icon: Mountain },
-    { type: 'KEBAKARAN', label: 'Kebakaran', color: '#EF4444', icon: Flame },
-    { type: 'ANGIN_KENCANG', label: 'Angin Kencang', color: '#22C55E', icon: Wind },
-    { type: 'LAINNYA', label: 'Lainnya', color: '#8B5CF6', icon: MoreHorizontal },
-];
 
-export default function DisasterMapPage({}: DisasterMapPageProps) {
+export default function DisasterMapPage({ markers = [], mapSettings, disasterTypes = [] }: DisasterMapPageProps) {
     const [selectedType, setSelectedType] = useState('all');
     const [isMounted, setIsMounted] = useState(false);
     const [showControls, setShowControls] = useState(false);
@@ -47,15 +38,15 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
 
     const filteredMarkers =
         selectedType === 'all'
-            ? MOCK_MARKERS
-            : MOCK_MARKERS.filter((m) => m.type === selectedType);
+            ? markers
+            : markers.filter((m) => m.type === selectedType);
 
-    const countByType = MOCK_MARKERS.reduce((acc, m) => {
+    const countByType = markers.reduce((acc, m) => {
         acc[m.type] = (acc[m.type] ?? 0) + 1;
         return acc;
     }, {} as Record<string, number>);
 
-    const activeAlertCount = MOCK_MARKERS.filter((m) => m.status === 'active_alert').length;
+    const activeAlertCount = markers.filter((m) => m.status === 'active_alert').length;
 
     return (
         <>
@@ -110,9 +101,9 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Semua Jenis Bencana</SelectItem>
-                                        {DISASTER_TYPES.map((t) => (
-                                            <SelectItem key={t} value={t}>
-                                                {getDisasterLabel(t)}
+                                        {disasterTypes.map((t) => (
+                                            <SelectItem key={t.type} value={t.type}>
+                                                {t.label}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -144,7 +135,7 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
                                     </div>
                                     <div>
                                         <p className="text-2xl font-bold text-premium-heading font-heading leading-none">
-                                            {MOCK_MARKERS.length}
+                                            {markers.length}
                                         </p>
                                         <p className="text-xs font-medium text-premium-body mt-1">
                                             Total Laporan Masuk
@@ -157,8 +148,8 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
                                         Legenda
                                     </h4>
                                     <div className="space-y-2.5">
-                                        {legendItems.map((item) => {
-                                            const Icon = item.icon;
+                                        {disasterTypes.map((item) => {
+                                            const IconComponent = (LucideIcons[item.icon as keyof typeof LucideIcons] as any) || LucideIcons.MapPin;
                                             const count = countByType[item.type] ?? 0;
                                             return (
                                                 <div
@@ -171,7 +162,7 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
                                                             className="flex h-7 w-7 items-center justify-center rounded-[8px] transition-transform group-hover:scale-110"
                                                             style={{ backgroundColor: item.color + '15' }}
                                                         >
-                                                            <Icon
+                                                            <IconComponent
                                                                 className="h-3.5 w-3.5"
                                                                 style={{ color: item.color }}
                                                             />
@@ -202,7 +193,11 @@ export default function DisasterMapPage({}: DisasterMapPageProps) {
                                         </div>
                                     }
                                 >
-                                    <DisasterMapClient filteredMarkers={filteredMarkers} />
+                                    <DisasterMapClient 
+                                        filteredMarkers={filteredMarkers}
+                                        mapSettings={mapSettings}
+                                        disasterTypes={disasterTypes}
+                                    />
                                 </Suspense>
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center text-sm text-premium-body bg-premium-bg">

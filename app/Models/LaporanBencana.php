@@ -18,6 +18,8 @@ class LaporanBencana extends Model
         'kode_laporan',
         'whatsapp_message_id',
         'user_id',
+        'nama_pelapor',
+        'no_hp_pelapor',
         'jenis_bencana_id',
         'status_id',
         'wilayah_id',

@@ -6,7 +6,7 @@ use App\Events\LaporanStatusUpdated;
 use App\Events\LaporanValidated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ValidasiStoreRequest;
-use App\Http\Resources\JenisBencanaResource;
+use App\Jobs\SendN8nWebhook;
 use App\Models\AuditLog;
 use App\Models\JenisBencana;
 use App\Models\LaporanBencana;
@@ -61,20 +61,34 @@ class ValidasiController extends Controller
             });
         }
 
-        $laporan = $query->paginate($request->input('per_page', 15))
+        $paginator = $query->paginate($request->input('per_page', 15))
             ->withQueryString();
 
-        // Get jenis bencana with cache
-        $jenisBencana = Cache::remember('jenis_bencana_list', 3600, function () {
-            return JenisBencana::all();
-        });
+        $laporan = [
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+        ];
+
+        $jenisBencana = JenisBencana::all();
 
         return Inertia::render('disaster/validation', [
             'laporan' => $laporan,
             'stats' => $stats,
             'filters' => $request->only(['jenis_bencana_id', 'date_from', 'date_to', 'q']),
             'filterOptions' => [
-                'jenisBencana' => JenisBencanaResource::collection($jenisBencana),
+                'jenisBencana' => $jenisBencana->map(fn ($j) => [
+                    'id' => $j->id,
+                    'kode' => $j->kode,
+                    'nama_bencana' => $j->nama_bencana,
+                    'warna' => $j->warna,
+                ]),
             ],
         ]);
     }
@@ -172,6 +186,18 @@ class ValidasiController extends Controller
 
             LaporanValidated::dispatch($laporan, $validasi);
             LaporanStatusUpdated::dispatch($laporan);
+
+            // Send webhook to n8n if report is valid
+            if ($validated['hasil_validasi'] === 'valid') {
+                SendN8nWebhook::dispatch('report_validated', [
+                    'laporan_id' => $laporan->id,
+                    'kode_laporan' => $laporan->kode_laporan,
+                    'jenis_bencana' => $laporan->jenisBencana?->nama_bencana,
+                    'alamat' => $laporan->alamat,
+                    'status' => $laporan->status?->nama_status,
+                    'admin_id' => auth()->id(),
+                ]);
+            }
 
             // Clear cache
             Cache::forget('laporan_statistics');

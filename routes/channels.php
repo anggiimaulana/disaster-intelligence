@@ -26,7 +26,7 @@ Broadcast::channel('laporan', function () {
  * Only authenticated admins can receive these updates
  */
 Broadcast::channel('admin.laporan', function ($user) {
-    return $user && $user->is_admin;
+    return $user && $user->isAdmin();
 });
 
 /**

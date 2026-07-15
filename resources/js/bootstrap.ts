@@ -13,7 +13,7 @@ window.Pusher = Pusher;
 // Extend window to include Echo and Pusher
 declare global {
     interface Window {
-        Echo: Echo;
+        Echo: any;
         Pusher: typeof Pusher;
     }
 }
