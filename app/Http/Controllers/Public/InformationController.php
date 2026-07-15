@@ -54,7 +54,7 @@ class InformationController extends Controller
         $news = Berita::orderBy('created_at', 'desc')->get()->map(function ($n) {
             return [
                 'id' => $n->id,
-                'slug' => $n->slug ?? \Str::slug($n->judul ?? $n->title),
+                'slug' => $n->slug ?? Str::slug($n->judul ?? $n->title),
                 'category' => $n->kategori ?? 'news',
                 'title' => $n->judul ?? $n->title,
                 'excerpt' => strip_tags(substr($n->konten ?? $n->content, 0, 150)).'...',
@@ -110,7 +110,7 @@ class InformationController extends Controller
         $guides = Kesiapsiagaan::orderBy('created_at', 'desc')->get()->map(function ($g) {
             return [
                 'id' => $g->id,
-                'slug' => $g->slug ?? \Str::slug($g->judul ?? $g->title),
+                'slug' => $g->slug ?? Str::slug($g->judul ?? $g->title),
                 'title' => $g->judul ?? $g->title,
                 'description' => strip_tags(substr($g->konten ?? $g->content, 0, 150)),
                 'content' => $g->konten ?? $g->content,
@@ -128,10 +128,10 @@ class InformationController extends Controller
     public function faq()
     {
         $faqsQuery = Faq::query();
-        if (\Schema::hasColumn('faqs', 'is_active')) {
+        if (Schema::hasColumn('faqs', 'is_active')) {
             $faqsQuery->where('is_active', true);
         }
-        if (\Schema::hasColumn('faqs', 'sort_order')) {
+        if (Schema::hasColumn('faqs', 'sort_order')) {
             $faqsQuery->orderBy('sort_order', 'asc');
         } else {
             $faqsQuery->orderBy('created_at', 'asc');

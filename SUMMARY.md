@@ -374,5 +374,23 @@ Hal ini disebabkan oleh prop tren statistik (`sparkData`) yang bernilai `undefin
 - **`resources/js/components/disaster/risk-badge.tsx`**, **`status-badge.tsx`**, **`disaster-type-badge.tsx`**:
   - Menambahkan normalisasi *case-insensitive* (`toUpperCase()`) dan konfigurasi *fallback* default pada ketiga komponen *badge* sehingga tidak pernah terjadi error `Cannot read properties of undefined (reading 'className')` saat menerima nilai berformat campuran seperti `'Tinggi'`, `'Darurat'`, atau `'Menunggu Validasi'`.
 
+---
 
+### 7. Perbaikan UI/UX CMS & Peningkatan Stabilitas Media Library
 
+#### **Masalah & Alasan Perubahan**
+Admin sebelumnya kesulitan mengelola konten karena teks editor `react-quill` yang tidak kompatibel dengan React 19, tidak adanya fitur manajemen gambar yang baik, skor SEO yang dilakukan secara manual, serta munculnya *blank screen* pada beberapa halaman karena ketidaksesuaian parsing struktur JSON.
+
+#### **Perbaikan yang Dilakukan**
+- **Implementasi TipTap Rich Text Editor**: 
+  - Mengganti `react-quill` dengan komponen `RichTextEditor` (berbasis TipTap) di modul Berita, Kesiapsiagaan, FAQ, dan Peringatan Dini. Hal ini memecahkan masalah inkompatibilitas dengan React 19.
+- **Fitur Icon & SEO Bawaan**:
+  - **`IconPicker`**: Mengimplementasikan komponen pemilih ikon dinamis untuk modul Kesiapsiagaan dan FAQ yang tidak selalu menggunakan gambar profil/thumbnail.
+  - **`SeoAnalyzer`**: Menambahkan alat analisis SEO *real-time* ke form CMS untuk memberikan umpan balik (skor/rating) kualitas konten dan panjang teks secara langsung.
+- **Penyelesaian Blank Screen Media Library**:
+  - Memperbaiki halaman `/cms/media` yang memutih akibat kesalahan pembacaan *meta pagination* (mengonversi dari `media.total` ke format Ineria standar `media.meta.total`).
+- **Peningkatan Kapasitas Media Library**:
+  - Menambahkan antarmuka dan *endpoint* baru untuk fungsi **Edit** (merubah nama file dan pemindahan folder) dan **Hapus** pada tabel `MediaLibrary`.
+  - Memperbaiki tautan *Copy URL* menggunakan *Absolute URL* (`config('app.url')`) alih-alih path relatif (`/storage/...`), sehingga alamat yang disalin bisa digunakan di mana saja.
+- **Pemecahan Konflik Namespace/LSP**:
+  - Menambahkan impor dan menghapus *root alias call* (`\Str` & `\Schema`) di `InformationController` yang menyebabkan _false-positive warning_ pada IDE.
