@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { home } from '@/routes';
 import { disasterMap } from '@/routes/public';
+import { config } from '@/config';
 
 // Fix Leaflet default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -64,13 +65,13 @@ export default function ReportPage({ supportedRegencies, disasterTypes }: Report
         return now.toISOString().slice(0, 16);
     });
 
-    // Kecamatan & Desa from API
-    const [kecamatanList, setKecamatanList] = useState<string[]>([]);
-    const [desaList, setDesaList] = useState<string[]>([]);
+    // Kecamatan & Desa from API (now returns { code, name } objects)
+    const [kecamatanList, setKecamatanList] = useState<{code: string; name: string}[]>([]);
+    const [desaList, setDesaList] = useState<{code: string; name: string}[]>([]);
     const [loadingKecamatan, setLoadingKecamatan] = useState(false);
     const [loadingDesa, setLoadingDesa] = useState(false);
 
-    // Fetch kecamatan when kabupaten changes
+    // Fetch kecamatan when kabupaten changes (uses BPS code)
     const handleKabupatenChange = async (value: string) => {
         setKabupaten(value);
         setKecamatan('');
@@ -87,7 +88,7 @@ export default function ReportPage({ supportedRegencies, disasterTypes }: Report
         setLoadingKecamatan(false);
     };
 
-    // Fetch desa when kecamatan changes
+    // Fetch desa when kecamatan changes (uses BPS code)
     const handleKecamatanChange = async (value: string) => {
         setKecamatan(value);
         setDesa('');
@@ -95,7 +96,8 @@ export default function ReportPage({ supportedRegencies, disasterTypes }: Report
 
         setLoadingDesa(true);
         try {
-            const res = await fetch(`/api/desa-by-kecamatan/${encodeURIComponent(value)}?kabupaten=${encodeURIComponent(kabupaten)}`);
+            const kecCode = kecamatanList.find(k => k.name === value)?.code || value;
+            const res = await fetch(`/api/desa-by-kecamatan/${encodeURIComponent(kecCode)}?kabupaten=${encodeURIComponent(kabupaten)}`);
             const data = await res.json();
             setDesaList(data.data || []);
         } catch { setDesaList([]); }
@@ -236,7 +238,7 @@ export default function ReportPage({ supportedRegencies, disasterTypes }: Report
                                     <label className="block text-sm font-bold text-premium-heading mb-2">Kabupaten/Kota *</label>
                                     <select value={kabupaten} onChange={(e) => handleKabupatenChange(e.target.value)} required className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm appearance-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke-width=\'1.5\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'m8.25 4.5 7.5 7.5-7.5 7.5\' /%3E%3C/svg%3E")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em' }}>
                                         <option value="">Pilih kabupaten/kota</option>
-                                        {supportedRegencies.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                                        {supportedRegencies.map((r) => <option key={r.id} value={r.code}>{r.name}</option>)}
                                     </select>
                                 </div>
 
@@ -246,14 +248,14 @@ export default function ReportPage({ supportedRegencies, disasterTypes }: Report
                                         <label className="block text-sm font-bold text-premium-heading mb-2">Kecamatan *</label>
                                         <select value={kecamatan} onChange={(e) => handleKecamatanChange(e.target.value)} required disabled={!kabupaten || loadingKecamatan} className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm appearance-none disabled:opacity-50" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke-width=\'1.5\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'m8.25 4.5 7.5 7.5-7.5 7.5\' /%3E%3C/svg%3E")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em' }}>
                                         <option value="">{loadingKecamatan ? 'Memuat...' : 'Pilih kecamatan'}</option>
-                                        {kecamatanList.map((k) => <option key={k} value={k}>{k}</option>)}
+                                        {kecamatanList.map((k) => <option key={k.code} value={k.name}>{k.name}</option>)}
                                     </select>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-premium-heading mb-2">Desa/Kelurahan</label>
                                         <select value={desa} onChange={(e) => setDesa(e.target.value)} disabled={!kecamatan || loadingDesa} className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm appearance-none disabled:opacity-50" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke-width=\'1.5\' stroke=\'%2364748b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'m8.25 4.5 7.5 7.5-7.5 7.5\' /%3E%3C/svg%3E")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1em' }}>
                                         <option value="">{loadingDesa ? 'Memuat...' : 'Pilih desa'}</option>
-                                        {desaList.map((d) => <option key={d} value={d}>{d}</option>)}
+                                        {desaList.map((d) => <option key={d.code} value={d.name}>{d.name}</option>)}
                                     </select>
                                     </div>
                                 </div>
@@ -318,7 +320,7 @@ export default function ReportPage({ supportedRegencies, disasterTypes }: Report
                                             style={{ zIndex: 0 }}
                                             scrollWheelZoom={true}
                                         >
-                                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+                                            <TileLayer url={config.mapTileUrl} attribution='&copy; OpenStreetMap' />
                                             {latitude && longitude && (
                                                 <LocationMarker lat={latitude} lng={longitude} onPick={(lat, lng) => { setLatitude(lat); setLongitude(lng); }} />
                                             )}

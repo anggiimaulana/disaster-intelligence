@@ -38,6 +38,7 @@ import { Icon } from "@/components/ui/icon";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { config } from '@/config';
 
 // Slide-in animation for toast notification
 const toastStyles = `
@@ -130,8 +131,8 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [mapKey, setMapKey] = useState(0);
     const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info' | 'warning'; message: string } | null>(null);
-    const [kecamatanOptions, setKecamatanOptions] = useState<string[]>([]);
-    const [desaOptions, setDesaOptions] = useState<string[]>([]);
+    const [kecamatanOptions, setKecamatanOptions] = useState<{code: string; name: string}[]>([]);
+    const [desaOptions, setDesaOptions] = useState<{code: string; name: string}[]>([]);
     const [isLoadingKecamatan, setIsLoadingKecamatan] = useState(false);
     const [isLoadingDesa, setIsLoadingDesa] = useState(false);
 
@@ -195,7 +196,7 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
         return () => window.removeEventListener('map-click', handleMapClick as EventListener);
     }, [setData]);
 
-    // Fetch kecamatan when kabupaten changes
+    // Fetch kecamatan when kabupaten changes (uses BPS code for accuracy)
     useEffect(() => {
         if (!data.kabupaten) {
             setKecamatanOptions([]);
@@ -208,14 +209,13 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
         const selected = kabupatenList.find(k => k.code === data.kabupaten || k.name === data.kabupaten);
         if (!selected) return;
 
-        const kabupatenName = selected.name;
-
         setIsLoadingKecamatan(true);
         setData('kecamatan', '');
         setData('desa', '');
         setDesaOptions([]);
 
-        fetch(`/api/kecamatan/${encodeURIComponent(kabupatenName)}`, {
+        // Use code for API call — backend supports both code and name
+        fetch(`/api/kecamatan/${encodeURIComponent(selected.code)}`, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         })
             .then(res => res.json())
@@ -230,7 +230,7 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
             .finally(() => setIsLoadingKecamatan(false));
     }, [data.kabupaten]);
 
-    // Fetch desa when kecamatan changes
+    // Fetch desa when kecamatan changes (uses BPS code for accuracy)
     useEffect(() => {
         if (!data.kecamatan || !data.kabupaten) {
             setDesaOptions([]);
@@ -240,10 +240,15 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
         const selected = kabupatenList.find(k => k.code === data.kabupaten || k.name === data.kabupaten);
         if (!selected) return;
 
+        // kecamatan option now has { code, name } — use code
+        const kecCode = typeof data.kecamatan === 'string' && data.kecamatan.length > 0
+            ? (kecamatanOptions.find((k: any) => k.name === data.kecamatan)?.code || data.kecamatan)
+            : data.kecamatan;
+
         setIsLoadingDesa(true);
         setDesaOptions([]);
 
-        fetch(`/api/desa-by-kecamatan/${encodeURIComponent(data.kecamatan)}?kabupaten=${encodeURIComponent(selected.name)}`, {
+        fetch(`/api/desa-by-kecamatan/${encodeURIComponent(kecCode)}?kabupaten=${encodeURIComponent(selected.code)}`, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         })
             .then(res => res.json())
@@ -338,10 +343,15 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
 
     const fetchCoordinatesFromWilayah = async (kecamatan: string, desa?: string) => {
         try {
-            const params = new URLSearchParams({ kecamatan });
-            if (desa) params.append('desa', desa);
+            // Resolve kecamatan code from options
+            const kecCode = kecamatanOptions.find((k: any) => k.name === kecamatan)?.code || kecamatan;
+            const params = new URLSearchParams({ kecamatan: kecCode });
+            if (desa) {
+                const desaCode = desaOptions.find((d: any) => d.name === desa)?.code || desa;
+                params.append('desa', desaCode);
+            }
             const selectedKab = kabupatenList.find(k => k.code === data.kabupaten);
-            if (selectedKab) params.append('kabupaten', selectedKab.name);
+            if (selectedKab) params.append('kabupaten', selectedKab.code);
             const response = await fetch(`/api/coordinates-by-location?${params}`, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
@@ -942,7 +952,7 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
                                         {isLoadingKecamatan ? 'Memuat...' : 'Pilih Kecamatan'}
                                     </option>
                                     {kecamatanOptions.map((kec) => (
-                                        <option key={kec} value={kec}>{kec}</option>
+                                        <option key={kec.code} value={kec.name}>{kec.name}</option>
                                     ))}
                                     {!isLoadingKecamatan && kecamatanOptions.length === 0 && data.kabupaten && (
                                         <option value="" disabled>Tidak ada data kecamatan</option>
@@ -967,7 +977,7 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
                                         {isLoadingDesa ? 'Memuat...' : 'Pilih Desa/Kelurahan'}
                                     </option>
                                     {desaOptions.map((desa) => (
-                                        <option key={desa} value={desa}>{desa}</option>
+                                        <option key={desa.code} value={desa.name}>{desa.name}</option>
                                     ))}
                                     {!isLoadingDesa && desaOptions.length === 0 && data.kecamatan && (
                                         <option value="" disabled>Tidak ada data desa untuk kecamatan ini</option>
@@ -1042,7 +1052,7 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
                                     >
                                         <TileLayer
                                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            url={config.mapTileUrl}
                                         />
                                         <MapClickHandler />
                                         <FlyToCenter center={data.latitude && data.longitude ? [parseFloat(data.latitude), parseFloat(data.longitude)] : null} zoom={data.latitude && data.longitude ? 17 : mapZoom} />

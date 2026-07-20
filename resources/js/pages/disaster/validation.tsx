@@ -37,6 +37,7 @@ interface PageProps {
             deskripsi: string;
             created_at: string;
             validasi_ai: boolean;
+            validasi_admin: boolean;
             jenis_bencana: {
                 id: number;
                 kode: string;
@@ -72,6 +73,7 @@ interface PageProps {
             id: number;
             kode: string;
             nama_bencana: string;
+            warna: string;
         }>;
     };
 }
@@ -135,7 +137,7 @@ export default function Validation() {
                 router.reload({
                     only: ['laporan'],
                     onSuccess: (page) => {
-                        const updatedLaporan = (page.props as PageProps).laporan;
+                        const updatedLaporan = (page.props as any).laporan;
                         const updatedReport = updatedLaporan.data.find((r) => r.id === selectedId);
                         if (updatedReport) {
                             setSelectedReport(updatedReport);
@@ -172,7 +174,7 @@ export default function Validation() {
                 router.reload({
                     only: ['laporan'],
                     onSuccess: (page) => {
-                        const updatedLaporan = (page.props as PageProps).laporan;
+                        const updatedLaporan = (page.props as any).laporan;
                         const updatedReport = updatedLaporan.data.find((r) => r.id === selectedId);
                         if (updatedReport) {
                             setSelectedReport(updatedReport);

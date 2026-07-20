@@ -19,15 +19,16 @@ class RegencyController extends Controller
         ['code' => '3206', 'name' => 'KABUPATEN TASIKMALAYA'],
         ['code' => '3207', 'name' => 'KABUPATEN CIAMIS'],
         ['code' => '3208', 'name' => 'KABUPATEN KUNINGAN'],
-        ['code' => '3209', 'name' => 'KABUPATEN MAJALENGKA'],
-        ['code' => '3210', 'name' => 'KABUPATEN SUMEDANG'],
-        ['code' => '3211', 'name' => 'KABUPATEN INDRAMAYU'],
-        ['code' => '3212', 'name' => 'KABUPATEN SUBANG'],
-        ['code' => '3213', 'name' => 'KABUPATEN PURWAKARTA'],
-        ['code' => '3214', 'name' => 'KABUPATEN KARAWANG'],
-        ['code' => '3215', 'name' => 'KABUPATEN BEKASI'],
-        ['code' => '3216', 'name' => 'KABUPATEN BANDUNG BARAT'],
-        ['code' => '3217', 'name' => 'KABUPATEN PANGANDARAN'],
+        ['code' => '3209', 'name' => 'KABUPATEN CIREBON'],
+        ['code' => '3210', 'name' => 'KABUPATEN MAJALENGKA'],
+        ['code' => '3211', 'name' => 'KABUPATEN SUMEDANG'],
+        ['code' => '3212', 'name' => 'KABUPATEN INDRAMAYU'],
+        ['code' => '3213', 'name' => 'KABUPATEN SUBANG'],
+        ['code' => '3214', 'name' => 'KABUPATEN PURWAKARTA'],
+        ['code' => '3215', 'name' => 'KABUPATEN KARAWANG'],
+        ['code' => '3216', 'name' => 'KABUPATEN BEKASI'],
+        ['code' => '3217', 'name' => 'KABUPATEN BANDUNG BARAT'],
+        ['code' => '3218', 'name' => 'KABUPATEN PANGANDARAN'],
         ['code' => '3271', 'name' => 'KOTA BOGOR'],
         ['code' => '3272', 'name' => 'KOTA SUKABUMI'],
         ['code' => '3273', 'name' => 'KOTA BANDUNG'],
@@ -41,7 +42,6 @@ class RegencyController extends Controller
 
     public function index()
     {
-        // Sync: ensure all Jawa Barat regencies exist in DB
         foreach ($this->jawaBarat as $regency) {
             SupportedRegency::updateOrCreate(
                 ['code' => $regency['code']],

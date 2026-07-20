@@ -2,6 +2,7 @@ import { Bell, Map as MapIcon, TriangleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import { useForm } from '@inertiajs/react';
+import { config } from '@/config';
 
 const defaultRiskThresholds = [
     { level: 'Rendah', range: '0 - 39', color: 'bg-green-500', notif: 'Tidak ada notifikasi', enabled: true },
@@ -168,7 +169,7 @@ export default function TabPeringatan({ appSettings }: any) {
                     </div>
                     <div className="mt-4 h-32 overflow-hidden rounded-xl border border-slate-200">
                         <MapContainer center={[-6.42, 108.20]} zoom={10} className="h-full w-full" style={{ zIndex: 0 }} scrollWheelZoom={false}>
-                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                            <TileLayer url={config.mapTileUrl} />
                             <CircleMarker center={[-6.42, 108.20]} radius={8} fillColor="#EF4444" fillOpacity={0.8} color="#fff" weight={2} />
                         </MapContainer>
                     </div>

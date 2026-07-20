@@ -6,7 +6,7 @@ import ReportStepsSection from '@/components/public/home/ReportStepsSection';
 import WhyReportCard from '@/components/public/home/WhyReportCard';
 import NewsSection from '@/components/public/home/NewsSection';
 import WhatsAppCtaPanel from '@/components/public/home/WhatsAppCtaPanel';
-import { MOCK_ARTICLES } from '@/data/mock/public/articles';
+import type { InformationArticle } from '@/types/public-disaster';
 import type { PageProps } from '@/types';
 
 interface HomePageProps extends PageProps {
@@ -15,9 +15,10 @@ interface HomePageProps extends PageProps {
     mapSettings?: any;
     disasterTypes?: any[];
     alerts?: any[];
+    articles?: InformationArticle[];
 }
 
-export default function HomePage({ stats, alerts = [], markers = [], mapSettings = {}, disasterTypes = [] }: HomePageProps) {
+export default function HomePage({ stats, alerts = [], markers = [], mapSettings = {}, disasterTypes = [], articles = [] }: HomePageProps) {
     return (
         <>
             <Head title="Beranda - Disaster Intelligence" />
@@ -31,7 +32,7 @@ export default function HomePage({ stats, alerts = [], markers = [], mapSettings
             />
             <ReportStepsSection />
             <WhyReportCard />
-            <NewsSection articles={MOCK_ARTICLES} />
+            {articles.length > 0 && <NewsSection articles={articles} />}
             <WhatsAppCtaPanel />
         </>
     );

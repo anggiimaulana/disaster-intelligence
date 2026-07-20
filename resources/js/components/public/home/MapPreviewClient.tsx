@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getDisasterLabel } from '@/lib/utils';
+import { config } from '@/config';
 
 interface MapPreviewClientProps {
     markers?: any[];
@@ -33,7 +34,7 @@ export default function MapPreviewClient({ markers = [], mapSettings = {}, disas
             keyboard={false}
             attributionControl={false}
         >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <TileLayer url={config.mapTileUrl} />
             {markers.map((marker) => (
                 <CircleMarker
                     key={marker.id}

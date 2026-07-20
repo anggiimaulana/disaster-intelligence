@@ -1,9 +1,10 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import { Sparkline } from '@/components/disaster/sparkline';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AlertTriangle, Bell, Building, Heart, MapPin, MessageCircle, Plus, Send, Settings, Users, Edit2, Trash2 } from 'lucide-react';
+import { config } from '@/config';
 
 const riskColor: Record<string, string> = { TINGGI: '#EF4444', SEDANG: '#F59E0B', RENDAH: '#22C55E', AMAN: '#94A3B8' };
 
@@ -47,7 +48,7 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
 
     const confirmDelete = (id: string) => {
         if (confirm('Yakin ingin menghapus peringatan ini?')) {
-            useForm().delete(`/cms/alerts/${id}`);
+            router.delete(`/cms/alerts/${id}`);
         }
     };
 
@@ -197,7 +198,7 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                     </div>
                     <div className="h-[300px] overflow-hidden rounded-lg">
                         <MapContainer center={[-6.42, 108.20]} zoom={10} className="h-full w-full" style={{ zIndex: 0 }} scrollWheelZoom={false}>
-                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                            <TileLayer url={config.mapTileUrl} />
                             {mapMarkers?.map((m: any, i: number) => (
                                 <CircleMarker key={i} center={[m.lat, m.lng]} radius={12} fillColor={riskColor[m.risk]} fillOpacity={0.6} color={riskColor[m.risk]} weight={2}>
                                     <Tooltip>{m.risk}</Tooltip>

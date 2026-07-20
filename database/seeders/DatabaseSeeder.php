@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             JenisBencanaSeeder::class,
             StatusLaporanSeeder::class,
-            WilayahSeeder::class,
+            WilayahApiSeeder::class,
         ]);
 
         // Create admin user

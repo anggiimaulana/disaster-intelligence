@@ -1,4 +1,5 @@
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { config } from '@/config';
 import 'leaflet/dist/leaflet.css';
 
 interface ContactMapClientProps {
@@ -16,7 +17,7 @@ export default function ContactMapClient({ location }: ContactMapClientProps) {
         >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                url={config.mapTileUrl}
             />
             <CircleMarker center={location} radius={12} fillColor="#0B2A52" fillOpacity={0.9} color="#ffffff" weight={3}>
                 <Popup className="rounded-xl">

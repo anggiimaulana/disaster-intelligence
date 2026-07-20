@@ -26,23 +26,16 @@ use Inertia\Response;
 
 class PengaduanController extends Controller
 {
-    /**
-     * Display the public reporting form
-     */
     public function index(): Response
     {
-        // Cache static reference data for 1 hour
-        // Cache arrays, not Eloquent objects — avoids serialization corruption
         $jenisBencana = Cache::remember('jenis_bencana_list_v2', 3600, function () {
             return JenisBencana::select('id', 'kode', 'nama_bencana', 'icon', 'warna')->get()->toArray();
         });
 
-        // Cache status data
         $statusList = Cache::remember('status_laporan_list', 3600, function () {
             return StatusLaporan::select('id', 'nama_status', 'warna')->get()->toArray();
         });
 
-        // Active kabupaten list from supported_regencies (admin-controlled)
         $kabupatenList = Cache::remember('kabupaten_list_v2', 3600, function () {
             return SupportedRegency::where('is_active', true)
                 ->select('code', 'name')
@@ -58,10 +51,6 @@ class PengaduanController extends Controller
         ]);
     }
 
-    /**
-     * Store a new disaster report (public, no login required)
-     * Rate limited by middleware: 30 requests per minute per IP
-     */
     public function store(LaporBencanaRequest $request): JsonResponse
     {
         $ip = $request->ip();
@@ -71,39 +60,33 @@ class PengaduanController extends Controller
 
             DB::beginTransaction();
 
-            // Create or find wilayah with lock for concurrency
             $wilayah = $this->findOrCreateWilayah($validated);
 
-            // Generate kode with lock to prevent race conditions
             $kode = LaporanBencana::generateKode();
 
-            // Create laporan bencana
             $laporan = LaporanBencana::create([
                 'kode_laporan' => $kode,
                 'jenis_bencana_id' => $validated['jenis_bencana_id'],
-                'status_id' => 1, // Menunggu
+                'status_id' => 1,
                 'wilayah_id' => $wilayah?->id,
                 'judul' => $validated['judul'],
                 'deskripsi' => $validated['deskripsi'],
                 'alamat' => $validated['alamat'],
                 'kecamatan' => $validated['kecamatan'],
                 'desa' => $validated['desa'] ?? null,
-                'latitude' => $validated['latitude'],
-                'longitude' => $validated['longitude'],
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
                 'tingkat_keparahan' => $this->calculateSeverity($validated['jenis_bencana_id'], $validated['deskripsi']),
                 'sumber_data' => 'website',
                 'waktu_kejadian' => $validated['waktu_kejadian'] ?? now(),
             ]);
 
-            // Handle media uploads
             if ($request->hasFile('media')) {
                 $this->storeMedia($laporan, $request->file('media'));
             }
 
-            // Store reporter info in separate table (for better query performance)
             $this->storeReporterInfo($laporan, $validated);
 
-            // Append reporter info to description (for backward compatibility)
             $reporterData = [
                 'nama' => $validated['nama_pelapor'],
                 'no_hp' => $validated['no_hp'],
@@ -113,11 +96,9 @@ class PengaduanController extends Controller
 
             DB::commit();
 
-            // Fire real-time event
             $laporan->load(['jenisBencana', 'status']);
             LaporanCreated::dispatch($laporan);
 
-            // Clear cache
             Cache::forget('laporan_statistics');
 
             Log::info('New disaster report created', [
@@ -156,14 +137,10 @@ class PengaduanController extends Controller
         }
     }
 
-    /**
-     * Track a report by its code
-     */
     public function track(Request $request): Response|JsonResponse
     {
         $kode = $request->query('kode_laporan');
 
-        // If no code provided, show the search form
         if (! $kode) {
             if ($request->wantsJson()) {
                 return response()->json([
@@ -175,7 +152,6 @@ class PengaduanController extends Controller
             return Inertia::render('public/pengaduan/track');
         }
 
-        // Validate code format
         $validator = validator(['kode_laporan' => $kode], [
             'kode_laporan' => ['string', 'regex:/^LAP-[A-Z0-9\-]+$/i'],
         ]);
@@ -195,7 +171,6 @@ class PengaduanController extends Controller
             ]);
         }
 
-        // Rate limit tracking requests
         $trackKey = 'track:'.$request->ip();
         if (RateLimiter::tooManyAttempts($trackKey, 30)) {
             return response()->json([
@@ -250,15 +225,10 @@ class PengaduanController extends Controller
         ]);
     }
 
-    /**
-     * API endpoint to get latest reports (for public map)
-     * Cached for performance
-     */
     public function latest(Request $request): JsonResponse
     {
         $limit = min($request->input('limit', 50), 100);
 
-        // Use cache for map data
         $cacheKey = 'laporan_latest:'.$limit;
         $laporan = Cache::remember($cacheKey, 30, function () use ($limit) {
             return LaporanBencana::with([
@@ -272,7 +242,7 @@ class PengaduanController extends Controller
                     'created_at', 'updated_at',
                 ])
                 ->where(function ($query) {
-                    $query->whereIn('status_id', [2, 3, 4]) // Diproses, Warning, Darurat
+                    $query->whereIn('status_id', [2, 3, 4])
                         ->orWhere(function ($q) {
                             $q->where('validasi_admin', true)
                                 ->whereNotIn('status_id', [5, 6]);
@@ -293,15 +263,9 @@ class PengaduanController extends Controller
         ]);
     }
 
-    /**
-     * API endpoint to get report statistics
-     * Cached for performance
-     */
     public function statistics(): JsonResponse
     {
-        // Cache statistics for 60 seconds
         $stats = Cache::remember('laporan_statistics_v2', 60, function () {
-            // Single optimized query for all status counts
             $statusCounts = LaporanBencana::selectRaw('status_id, count(*) as count')
                 ->groupBy('status_id')
                 ->pluck('count', 'status_id')
@@ -319,7 +283,6 @@ class PengaduanController extends Controller
             ];
         });
 
-        // Get by jenis from cache (longer TTL)
         $byJenis = Cache::remember('laporan_by_jenis_v2', 300, function () {
             $result = [];
             $items = LaporanBencana::selectRaw('jenis_bencana_id, count(*) as total')
@@ -327,7 +290,6 @@ class PengaduanController extends Controller
                 ->groupBy('jenis_bencana_id')
                 ->get();
 
-            // Get jenis data
             $jenisData = JenisBencana::select('id', 'kode', 'nama_bencana', 'warna')
                 ->get()
                 ->keyBy('id');
@@ -358,24 +320,37 @@ class PengaduanController extends Controller
         ]);
     }
 
-    /**
-     * Find or create wilayah record
-     */
     protected function findOrCreateWilayah(array $data): ?Wilayah
     {
-        $latitude = (float) $data['latitude'];
-        $longitude = (float) $data['longitude'];
+        $latitude = ! empty($data['latitude']) ? (float) $data['latitude'] : null;
+        $longitude = ! empty($data['longitude']) ? (float) $data['longitude'] : null;
 
-        // Find existing wilayah by coordinates (within ~100m radius)
-        $existing = Wilayah::whereRaw('
-            ABS(latitude - ?) < 0.001 AND ABS(longitude - ?) < 0.001
-        ', [$latitude, $longitude])->first();
+        // If coordinates available, try to find existing wilayah by proximity
+        if ($latitude !== null && $longitude !== null) {
+            $existing = Wilayah::whereRaw('
+                ABS(latitude - ?) < 0.001 AND ABS(longitude - ?) < 0.001
+            ', [$latitude, $longitude])->first();
 
-        if ($existing) {
-            return $existing;
+            if ($existing) {
+                return $existing;
+            }
         }
 
-        // Create new wilayah with dynamic location
+        // Try to find by kecamatan + desa name (from CSV data)
+        if (! empty($data['kecamatan'])) {
+            $query = Wilayah::where('kecamatan', $data['kecamatan']);
+
+            if (! empty($data['desa'])) {
+                $query->where('desa', $data['desa']);
+            }
+
+            $existing = $query->first();
+            if ($existing) {
+                return $existing;
+            }
+        }
+
+        // Create new wilayah record
         return Wilayah::create([
             'provinsi' => $data['provinsi'] ?? 'Jawa Barat',
             'kabupaten' => $data['kabupaten'] ?? 'Indramayu',
@@ -386,9 +361,6 @@ class PengaduanController extends Controller
         ]);
     }
 
-    /**
-     * Store uploaded media files
-     */
     protected function storeMedia(LaporanBencana $laporan, array $files): void
     {
         $mediaRecords = [];
@@ -406,16 +378,11 @@ class PengaduanController extends Controller
             ];
         }
 
-        // Bulk insert for performance
         LaporanMedia::insert($mediaRecords);
     }
 
-    /**
-     * Store reporter information
-     */
     protected function storeReporterInfo(LaporanBencana $laporan, array $data): void
     {
-        // Store in audit_logs for tracking purposes
         AuditLog::create([
             'action' => 'REPORTER_INFO',
             'table_name' => 'laporan_bencana',
@@ -429,9 +396,6 @@ class PengaduanController extends Controller
         ]);
     }
 
-    /**
-     * Determine media type from MIME
-     */
     protected function getMediaType(string $mime): string
     {
         return match (true) {
@@ -442,25 +406,19 @@ class PengaduanController extends Controller
         };
     }
 
-    /**
-     * Calculate severity based on disaster type and description
-     */
     protected function calculateSeverity(int $jenisBencanaId, string $description): string
     {
         $description = strtolower($description);
 
-        // Keywords indicating high severity
         $emergencyKeywords = ['darurat', 'jebol', 'hampir', 'parah', 'besar', 'bencana', 'mengungsi', 'evakuasi', 'tsunami', 'gempa'];
         $warningKeywords = ['meningkat', 'mulai', 'sedang', 'kronis', 'berulang', 'bahaya', 'rawan', 'luar biasa'];
 
-        // Check for emergency keywords first
         foreach ($emergencyKeywords as $keyword) {
             if (str_contains($description, $keyword)) {
                 return 'Tinggi';
             }
         }
 
-        // Check for warning keywords
         foreach ($warningKeywords as $keyword) {
             if (str_contains($description, $keyword)) {
                 return 'Sedang';
@@ -471,7 +429,7 @@ class PengaduanController extends Controller
     }
 
     /**
-     * API: Get desa list by kecamatan (optionally scoped by kabupaten)
+     * API: Get desa list by kecamatan — supports both code and name
      */
     public function getDesaByKecamatan(string $kecamatan, Request $request): JsonResponse
     {
@@ -481,16 +439,34 @@ class PengaduanController extends Controller
             : "desa_by_kecamatan:all:{$kecamatan}";
 
         $desa = Cache::remember($cacheKey, 3600, function () use ($kecamatan, $kabupaten) {
-            $query = Wilayah::where('kecamatan', $kecamatan)
-                ->whereNotNull('desa')
-                ->distinct('desa')
-                ->orderBy('desa');
+            $query = Wilayah::query();
 
-            if ($kabupaten) {
-                $query->where('kabupaten', $this->normalizeWilayahName($kabupaten));
+            // Support code or name
+            if (ctype_digit($kecamatan)) {
+                $query->where('kode_kecamatan', $kecamatan);
+            } else {
+                $query->where('kecamatan', $kecamatan);
             }
 
-            return $query->pluck('desa')->toArray();
+            $query->whereNotNull('desa');
+
+            if ($kabupaten) {
+                if (ctype_digit($kabupaten)) {
+                    $query->where('kode_kabupaten', $kabupaten);
+                } else {
+                    $query->where('kabupaten', $this->normalizeWilayahName($kabupaten));
+                }
+            }
+
+            return $query->select('kode_desa', 'desa')
+                ->distinct()
+                ->orderBy('desa')
+                ->get()
+                ->map(fn ($d) => [
+                    'code' => $d->kode_desa,
+                    'name' => $d->desa,
+                ])
+                ->toArray();
         });
 
         return response()->json([
@@ -511,13 +487,10 @@ class PengaduanController extends Controller
         $query = $request->input('q');
         $lowerQuery = strtolower($query);
 
-        // Strip common prefixes for better DB matching
         $prefixes = ['kecamatan ', 'desa ', 'kelurahan ', 'kota ', 'kabupaten ', 'kampung '];
         $strippedQuery = str_replace($prefixes, '', $lowerQuery);
         $searchTerms = [$lowerQuery, $strippedQuery];
 
-        // 1. First, try to match against our Wilayah database (Indonesia-wide)
-        // Check for exact/partial matches on desa/kecamatan names
         $wilayahMatch = Wilayah::whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->where(function ($q) use ($searchTerms) {
@@ -559,11 +532,12 @@ class PengaduanController extends Controller
             ]);
         }
 
-        // 2. Fallback to Nominatim (OpenStreetMap) — Indonesia-wide
         $address = $query.', Indonesia';
 
         try {
-            $response = Http::timeout(10)->get('https://nominatim.openstreetmap.org/search', [
+            $response = Http::timeout(10)->withHeaders([
+                'User-Agent' => config('services.nominatim.user_agent', 'DisasterIntelligenceBPBD/1.0'),
+            ])->get(config('services.nominatim.base_url', 'https://nominatim.openstreetmap.org').'/search', [
                 'q' => $address,
                 'format' => 'json',
                 'limit' => 1,
@@ -581,15 +555,13 @@ class PengaduanController extends Controller
             }
 
             $result = $data[0];
-            $lat = (float) $result['lat'];
-            $lng = (float) $result['lon'];
 
             return response()->json([
                 'success' => true,
                 'source' => 'nominatim',
                 'data' => [
-                    'latitude' => $lat,
-                    'longitude' => $lng,
+                    'latitude' => (float) $result['lat'],
+                    'longitude' => (float) $result['lon'],
                     'display_name' => $result['display_name'],
                     'boundingbox' => $result['boundingbox'] ?? null,
                 ],
@@ -617,7 +589,9 @@ class PengaduanController extends Controller
         $address = $request->input('address').', Indonesia';
 
         try {
-            $response = Http::timeout(10)->get('https://nominatim.openstreetmap.org/search', [
+            $response = Http::timeout(10)->withHeaders([
+                'User-Agent' => config('services.nominatim.user_agent', 'DisasterIntelligenceBPBD/1.0'),
+            ])->get(config('services.nominatim.base_url', 'https://nominatim.openstreetmap.org').'/search', [
                 'q' => $address,
                 'format' => 'json',
                 'limit' => 1,
@@ -667,12 +641,24 @@ class PengaduanController extends Controller
             'kabupaten' => 'nullable|string',
         ]);
 
-        $query = Wilayah::where('kecamatan', $request->input('kecamatan'))
-            ->whereNotNull('latitude')
+        $query = Wilayah::query();
+
+        // Support code or name
+        if (ctype_digit($request->input('kecamatan'))) {
+            $query->where('kode_kecamatan', $request->input('kecamatan'));
+        } else {
+            $query->where('kecamatan', $request->input('kecamatan'));
+        }
+
+        $query->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
         if ($request->filled('kabupaten')) {
-            $query->where('kabupaten', $this->normalizeWilayahName($request->input('kabupaten')));
+            if (ctype_digit($request->input('kabupaten'))) {
+                $query->where('kode_kabupaten', $request->input('kabupaten'));
+            } else {
+                $query->where('kabupaten', $this->normalizeWilayahName($request->input('kabupaten')));
+            }
         }
 
         if ($request->filled('desa')) {
@@ -700,7 +686,7 @@ class PengaduanController extends Controller
     }
 
     /**
-     * API: Get list of active kabupaten (from supported_regencies)
+     * API: Get list of active kabupaten
      */
     public function getKabupatenList(): JsonResponse
     {
@@ -719,18 +705,33 @@ class PengaduanController extends Controller
     }
 
     /**
-     * API: Get kecamatan list by kabupaten (from Wilayah table)
+     * API: Get kecamatan list by kabupaten — supports code or name
      */
     public function getKecamatanByKabupaten(string $kabupaten): JsonResponse
     {
-        $normalized = $this->normalizeWilayahName($kabupaten);
+        $isCode = ctype_digit($kabupaten);
+        $cacheKey = $isCode
+            ? "kecamatan_by_kabupaten_code:{$kabupaten}"
+            : "kecamatan_by_kabupaten:{$kabupaten}";
 
-        $kecamatan = Cache::remember("kecamatan_by_kabupaten:{$normalized}", 3600, function () use ($normalized) {
-            return Wilayah::where('kabupaten', $normalized)
-                ->select('kecamatan')
+        $kecamatan = Cache::remember($cacheKey, 3600, function () use ($kabupaten, $isCode) {
+            $query = Wilayah::query();
+
+            if ($isCode) {
+                $query->where('kode_kabupaten', $kabupaten);
+            } else {
+                $normalized = $this->normalizeWilayahName($kabupaten);
+                $query->where('kabupaten', $normalized);
+            }
+
+            return $query->select('kode_kecamatan', 'kecamatan')
                 ->distinct()
                 ->orderBy('kecamatan')
-                ->pluck('kecamatan')
+                ->get()
+                ->map(fn ($d) => [
+                    'code' => $d->kode_kecamatan,
+                    'name' => $d->kecamatan,
+                ])
                 ->toArray();
         });
 
@@ -749,20 +750,4 @@ class PengaduanController extends Controller
 
         return ucwords(strtolower(trim($name)));
     }
-}
-
-/**
- * Return unmasked phone number
- */
-function maskPhoneNumber(string $phone): string
-{
-    return $phone;
-}
-
-/**
- * Return unmasked email
- */
-function maskEmail(?string $email): ?string
-{
-    return $email;
 }

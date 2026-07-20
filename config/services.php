@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'nominatim' => [
+        'base_url' => env('NOMINATIM_BASE_URL', 'https://nominatim.openstreetmap.org'),
+        'user_agent' => env('NOMINATIM_USER_AGENT', 'DisasterIntelligenceBPBD/1.0'),
+    ],
+
+    'map' => [
+        'tile_url' => env('MAP_TILE_URL', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        'tile_attribution' => env('MAP_TILE_ATTRIBUTION', '© OpenStreetMap contributors'),
+    ],
+
+    'wilayah_api' => [
+        'url' => env('WILAYAH_API_URL', 'https://api-wilayah-indonesia-v1.vercel.app/api'),
+    ],
+
 ];

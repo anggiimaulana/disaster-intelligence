@@ -1,11 +1,45 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 import { cn, formatDate, getDisasterLabel } from '@/lib/utils';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ArrowLeft, AlertTriangle, Bell, Brain, CheckSquare, Clock, Copy, Download, ExternalLink, FileText, MapPin, MessageCircle, Phone, Share2, Waves } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Bell, Brain, CheckSquare, Clock, Copy, Download, ExternalLink, FileText, MapPin, MessageCircle, Phone, Share2, Waves, X, Loader2 } from 'lucide-react';
 import type { LaporanDetailProps } from '@/types';
+import { config } from '@/config';
 
 export default function IncidentShow({ report }: LaporanDetailProps) {
+    const [showWarningModal, setShowWarningModal] = useState(false);
+    const [warningForm, setWarningForm] = useState({ level_warning: 'Waspada', pesan: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Map disaster type to jenis_bencana_id (1=Banjir, 2=Longsor, 3=Kebakaran, 4=Angin Kencang, 5=Lainnya)
+    const jenisBencanaMap: Record<string, number> = {
+        'BANJIR': 1, 'LONGSOR': 2, 'KEBAKARAN': 3, 'ANGIN_KENCANG': 4, 'LAINNYA': 5,
+    };
+
+    const handleCreateWarning = async () => {
+        setIsSubmitting(true);
+        try {
+            router.post('/cms/alerts', {
+                jenis_bencana_id: jenisBencanaMap[report.jenis_bencana] || 5,
+                level_warning: warningForm.level_warning,
+                wilayah: `${report.kecamatan}, ${report.lokasi}`,
+                pesan: warningForm.pesan || `Peringatan dini dari laporan ${report.laporan_id}: ${report.deskripsi}`,
+                status: 'aktif',
+            }, {
+                onSuccess: () => {
+                    setShowWarningModal(false);
+                },
+                onFinish: () => {
+                    setIsSubmitting(false);
+                },
+            });
+        } catch {
+            setIsSubmitting(false);
+            alert('Terjadi kesalahan koneksi');
+        }
+    };
+
     return (
         <>
             <Head title={`Detail Laporan - ${report.laporan_id}`} />
@@ -72,7 +106,7 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
                 </div>
             </div>
 
-            {/* Row 1: Informasi Laporan (kiri) | Foto + Lokasi (kanan) — grid-2 */}
+            {/* Row 1: Informasi Laporan (kiri) | Foto + Lokasi (kanan) */}
             <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
                 {/* Informasi Laporan */}
                 <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -143,7 +177,7 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
                         </div>
                         <div className="h-48 overflow-hidden rounded-lg">
                             <MapContainer center={[report.koordinat.lat, report.koordinat.lng]} zoom={13} className="h-full w-full" style={{ zIndex: 0 }} zoomControl={true} scrollWheelZoom={false}>
-                                <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                <TileLayer attribution='&copy; OpenStreetMap' url={config.mapTileUrl} />
                                 <CircleMarker center={[report.koordinat.lat, report.koordinat.lng]} radius={10} fillColor="#EF4444" fillOpacity={0.9} color="#ffffff" weight={3}>
                                     <Popup>{report.lokasi}, Kec. {report.kecamatan}</Popup>
                                 </CircleMarker>
@@ -159,19 +193,16 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
                 </div>
             </div>
 
-            {/* Row 2: Riwayat Aktivitas | Ringkasan AI | Metadata — grid-3 */}
+            {/* Row 2: Riwayat Aktivitas | Ringkasan AI | Metadata */}
             <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
                 {/* Riwayat Aktivitas — Timeline */}
                 <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h3 className="mb-4 text-base font-bold text-slate-900">Riwayat Aktivitas</h3>
                     <div className="relative pl-6">
-                        {/* Timeline line */}
                         <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-slate-200" />
-
                         <div className="space-y-5">
-                            {report.activities.map((activity, idx) => (
+                            {report.activities.map((activity) => (
                                 <div key={activity.id} className="relative">
-                                    {/* Dot */}
                                     <div className={cn(
                                         'absolute -left-6 top-1 h-[18px] w-[18px] rounded-full border-[3px] border-white shadow-sm',
                                         activity.type === 'whatsapp' ? 'bg-green-500' :
@@ -252,14 +283,79 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
                     <Link href={`/cms/incidents/${report.laporan_id.replace('#', '')}/analysis`} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">
                         <Brain className="h-4 w-4" /> Analisis AI
                     </Link>
-                    <Link href="/cms/validation" className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                    <Link href={`/cms/validation/${report.database_id}`} className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
                         <CheckSquare className="h-4 w-4" /> Validasi Laporan
                     </Link>
-                    <button className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
+                    <button onClick={() => setShowWarningModal(true)} className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
                         <Bell className="h-4 w-4" /> Buat Peringatan Dini
                     </button>
                 </div>
             </div>
+
+            {/* Modal: Buat Peringatan Dini */}
+            {showWarningModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-slate-900">Buat Peringatan Dini</h3>
+                            <button onClick={() => setShowWarningModal(false)} className="text-slate-400 hover:text-slate-600">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="mb-4 rounded-lg bg-amber-50 p-3">
+                            <p className="text-sm text-amber-800">
+                                <strong>Laporan:</strong> {report.laporan_id}<br />
+                                <strong>Lokasi:</strong> {report.lokasi}, Kec. {report.kecamatan}<br />
+                                <strong>Jenis:</strong> {getDisasterLabel(report.jenis_bencana)}
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700">Level Warning</label>
+                                <select
+                                    value={warningForm.level_warning}
+                                    onChange={(e) => setWarningForm({ ...warningForm, level_warning: e.target.value })}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                >
+                                    <option value="Waspada">WASPADA</option>
+                                    <option value="Siaga">SIAGA</option>
+                                    <option value="Awas">AWAS</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700">Pesan Peringatan</label>
+                                <textarea
+                                    value={warningForm.pesan}
+                                    onChange={(e) => setWarningForm({ ...warningForm, pesan: e.target.value })}
+                                    rows={3}
+                                    placeholder="Isi pesan peringatan (opsional, akan auto-fill dari deskripsi laporan)"
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowWarningModal(false)}
+                                className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleCreateWarning}
+                                disabled={isSubmitting}
+                                className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                            >
+                                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
+                                {isSubmitting ? 'Membuat...' : 'Buat Peringatan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

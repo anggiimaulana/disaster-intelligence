@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\Berita;
 use App\Models\EarlyWarning;
 use App\Models\JenisBencana;
 use App\Models\LaporanBencana;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -83,6 +85,27 @@ class HomeController extends Controller
             ];
         });
 
+        // Get latest published berita for homepage
+        $articles = Berita::where('status', 'published')
+            ->latest('published_at')
+            ->take(6)
+            ->get()
+            ->map(function ($b) {
+                $excerpt = strip_tags($b->content);
+                $excerpt = substr($excerpt, 0, 150).(strlen($excerpt) > 150 ? '...' : '');
+
+                return [
+                    'id' => (string) $b->id,
+                    'slug' => $b->slug,
+                    'category' => 'news',
+                    'title' => $b->title,
+                    'excerpt' => $excerpt,
+                    'imageUrl' => $b->thumbnail ? Storage::url('berita/'.$b->thumbnail) : 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+                    'publishedAt' => $b->published_at?->toISOString() ?? $b->created_at->toISOString(),
+                    'content' => $b->content,
+                ];
+            });
+
         return Inertia::render('public/home/index', [
             'title' => 'Beranda',
             'isSimulation' => false,
@@ -91,6 +114,7 @@ class HomeController extends Controller
             'markers' => $markers,
             'mapSettings' => $mapSettings,
             'disasterTypes' => $disasterTypes,
+            'articles' => $articles,
         ]);
     }
 }

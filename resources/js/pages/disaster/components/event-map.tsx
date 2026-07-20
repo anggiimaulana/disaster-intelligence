@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn, getDisasterLabel } from '@/lib/utils';
+import { config } from '@/config';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Waves, Mountain, Flame, Wind, MoreHorizontal } from 'lucide-react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet';
@@ -95,7 +96,7 @@ export function EventMap({ markers, filters, laporanByJenis }: EventMapProps) {
                 >
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        url={config.mapTileUrl}
                     />
                     {filteredMarkers.map((marker) => (
                         <CircleMarker

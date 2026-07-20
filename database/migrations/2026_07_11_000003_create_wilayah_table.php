@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('wilayah', function (Blueprint $table) {
             $table->id();
-            $table->string('provinsi', 100)->nullable();
-            $table->string('kabupaten', 100)->nullable();
-            $table->string('kecamatan', 100)->nullable();
-            $table->string('desa', 100)->nullable();
+            $table->string('provinsi', 255)->nullable();
+            $table->string('kabupaten', 255)->nullable();
+            $table->string('kecamatan', 255)->nullable();
+            $table->string('desa', 255)->nullable();
             $table->string('kodepos', 10)->nullable();
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();

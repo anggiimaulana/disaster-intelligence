@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AlertTriangle, Bell, CheckCircle, ExternalLink, FileText, MapPin, MessageCircle, Monitor, Mail, Send } from 'lucide-react';
+import { config } from '@/config';
 
 interface AnalysisDetailProps {
     laporan: {
@@ -230,7 +231,7 @@ export default function AnalysisDetail({ laporan, pipeline }: AnalysisDetailProp
                     </div>
                     <div className="h-32 overflow-hidden rounded-lg">
                         <MapContainer center={[pipeline.lokasi_detail.koordinat.lat, pipeline.lokasi_detail.koordinat.lng]} zoom={12} className="h-full w-full" style={{ zIndex: 0 }} scrollWheelZoom={false} zoomControl={false}>
-                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                            <TileLayer url={config.mapTileUrl} />
                             <CircleMarker center={[pipeline.lokasi_detail.koordinat.lat, pipeline.lokasi_detail.koordinat.lng]} radius={8} fillColor="#EF4444" fillOpacity={0.9} color="#fff" weight={2} />
                         </MapContainer>
                     </div>

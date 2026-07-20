@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getDisasterLabel } from '@/lib/utils';
+import { config } from '@/config';
 
 interface DisasterMapClientProps {
     filteredMarkers: any[];
@@ -35,7 +36,7 @@ export default function DisasterMapClient({ filteredMarkers, mapSettings = {}, d
         >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                url={config.mapTileUrl}
             />
             {filteredMarkers.map((marker) => (
                 <CircleMarker
