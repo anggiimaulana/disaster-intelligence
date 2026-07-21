@@ -11,12 +11,14 @@ import {
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const allIconKeys = Object.keys(LucideIcons).filter(k => 
-    !k.startsWith('create') && 
-    !k.startsWith('Lucide') && 
-    !k.startsWith('default') &&
-    /^[A-Z]/.test(k)
-);
+const allIconKeys = [
+    'Flame', 'Waves', 'Wind', 'CloudLightning', 'Mountain', 'Droplets', 
+    'ThermometerSun', 'CloudRain', 'Activity', 'AlertTriangle', 'Siren', 
+    'Tornado', 'Snowflake', 'Virus', 'Zap', 'Skull', 'Radioactive', 
+    'Biohazard', 'House', 'Ambulance', 'Car', 'Trees', 'MapPin',
+    'ShieldAlert', 'LifeBuoy', 'HeartPulse', 'Bandage', 'Crosshair',
+    'ThermometerSnowflake', 'Umbrella', 'CloudDrizzle', 'CloudSnow'
+];
 
 interface JenisBencana {
     id: number;

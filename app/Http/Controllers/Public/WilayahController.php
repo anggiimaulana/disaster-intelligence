@@ -9,7 +9,6 @@ class WilayahController extends Controller
 {
     public function districts(string $regency)
     {
-        // Support both code (3212) and name (Indramayu)
         $query = Wilayah::query();
 
         if (ctype_digit($regency)) {
@@ -20,7 +19,7 @@ class WilayahController extends Controller
             $query->where('kabupaten', $normalized);
         }
 
-        $districts = $query->select('kode_kecamatan', 'kecamatan')
+        $dbDistricts = $query->select('kode_kecamatan', 'kecamatan')
             ->distinct()
             ->orderBy('kecamatan')
             ->get()
@@ -29,6 +28,22 @@ class WilayahController extends Controller
                 'name' => $d->kecamatan,
             ])
             ->values();
+
+        $districts = collect();
+        if ($dbDistricts->isNotEmpty()) {
+            $districts = $dbDistricts;
+        } else {
+            $apiUrl = config('services.wilayah_api.url');
+            if ($apiUrl && ctype_digit($regency)) {
+                $response = \Illuminate\Support\Facades\Http::get("{$apiUrl}/districts/{$regency}.json");
+                if ($response->successful()) {
+                    $districts = collect($response->json())->map(fn ($d) => [
+                        'code' => $d['id'],
+                        'name' => $d['name'],
+                    ])->values();
+                }
+            }
+        }
 
         return response()->json(['data' => $districts]);
     }
@@ -54,7 +69,7 @@ class WilayahController extends Controller
             }
         }
 
-        $villages = $query->select('kode_desa', 'desa')
+        $dbVillages = $query->select('kode_desa', 'desa')
             ->distinct()
             ->orderBy('desa')
             ->get()
@@ -63,6 +78,22 @@ class WilayahController extends Controller
                 'name' => $v->desa,
             ])
             ->values();
+
+        $villages = collect();
+        if ($dbVillages->isNotEmpty()) {
+            $villages = $dbVillages;
+        } else {
+            $apiUrl = config('services.wilayah_api.url');
+            if ($apiUrl && ctype_digit($district)) {
+                $response = \Illuminate\Support\Facades\Http::get("{$apiUrl}/villages/{$district}.json");
+                if ($response->successful()) {
+                    $villages = collect($response->json())->map(fn ($v) => [
+                        'code' => $v['id'],
+                        'name' => $v['name'],
+                    ])->values();
+                }
+            }
+        }
 
         return response()->json(['data' => $villages]);
     }

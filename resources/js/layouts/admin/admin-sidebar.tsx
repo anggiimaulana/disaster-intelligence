@@ -65,6 +65,7 @@ const navGroups: NavGroup[] = [
     {
         title: 'Sistem',
         items: [
+            { label: 'Audit Log', href: '/cms/settings/log', icon: FileText, permission: 'manage settings' },
             {
                 label: 'Pengaturan',
                 icon: Settings,
@@ -77,7 +78,6 @@ const navGroups: NavGroup[] = [
                     { label: 'Keamanan', href: '/cms/settings/keamanan' },
                     { label: 'Environment (.env)', href: '/cms/settings/env' },
                     { label: 'Role & Hak Akses', href: '/cms/roles' },
-                    { label: 'Log Aktivitas', href: '/cms/settings/log' },
                 ],
             },
         ],
