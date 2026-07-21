@@ -17,21 +17,7 @@ class RoleController extends Controller
     {
         $roles = Role::with('permissions')->get();
         $users = User::with('roles')->orderBy('name')->get();
-
-        // Create default permissions if none exist
-        if (Permission::count() === 0) {
-            $defaultPermissions = [
-                'manage users', 'manage roles', 'manage settings',
-                'manage incidents', 'manage analysis', 'manage validation',
-                'manage alerts', 'manage news', 'manage preparedness',
-                'manage faq', 'manage disaster types', 'manage regencies',
-            ];
-            foreach ($defaultPermissions as $perm) {
-                Permission::create(['name' => $perm]);
-            }
-        }
-
-        $permissions = Permission::all();
+        $permissions = Permission::orderBy('name')->get();
 
         return Inertia::render('admin/roles/index', [
             'roles' => $roles,

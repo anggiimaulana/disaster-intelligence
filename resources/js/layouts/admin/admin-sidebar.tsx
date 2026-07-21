@@ -176,8 +176,9 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
                     {navGroups.map((group, gi) => {
                         const user = usePage().props.auth?.user;
                         const userPermissions = (user?.permissions as string[]) || [];
-                        const isSuperAdmin = user?.is_admin || user?.email === 'admin@example.com' || user?.email === 'admin@bpbd.id' || false;
-                        
+                        const userRoles = (user?.roles as Array<{ name: string }> | undefined)?.map(r => r.name) ?? [];
+                        const isSuperAdmin = userRoles.includes('super-admin');
+
                         const visibleItems = group.items.filter(item => {
                             if (!item.permission) return true;
                             if (isSuperAdmin) return true;
