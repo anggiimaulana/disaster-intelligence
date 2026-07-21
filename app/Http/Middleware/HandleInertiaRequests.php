@@ -62,6 +62,12 @@ class HandleInertiaRequests extends Middleware
             }
             $recentLogs = $query->get();
 
+            // SEC #10: whitelist of tables whose notifications get URLs.
+            // Anything else yields url=null. This prevents a tampered AuditLog
+            // table_name or record_id from injecting arbitrary URL paths into
+            // Inertia payload that ends up as href attributes in the UI.
+            $urlableTables = ['laporan_bencana', 'berita', 'kesiapsiagaan', 'early_warnings'];
+
             $notifications = $recentLogs->map(function ($log) {
                 $type = match (true) {
                     str_contains($log->action, 'VALIDATE') => 'success',
@@ -70,21 +76,29 @@ class HandleInertiaRequests extends Middleware
                     default => 'info',
                 };
 
+                // SEC #10: cast record_id to int so it can't be used for path
+                // injection (e.g. "../admin/users/1/edit"). Also gate on table_name.
+                $recordId = (int) $log->record_id;
+                $tableName = is_string($log->table_name) ? $log->table_name : '';
+
                 $url = match (true) {
-                    str_contains($log->action, 'VALIDATE_REPORT') && $log->table_name === 'laporan_bencana' => "/cms/validation/{$log->record_id}",
-                    str_contains($log->action, 'UPDATE_STATUS') && $log->table_name === 'laporan_bencana' => "/cms/incidents/{$log->record_id}",
+                    str_contains($log->action, 'VALIDATE_REPORT') && $tableName === 'laporan_bencana' => $recordId > 0 ? "/cms/validation/{$recordId}" : null,
+                    str_contains($log->action, 'UPDATE_STATUS') && $tableName === 'laporan_bencana' => $recordId > 0 ? "/cms/incidents/{$recordId}" : null,
                     str_contains($log->action, 'CREATE_USER') || str_contains($log->action, 'DELETE_USER') => '/cms/roles',
                     str_contains($log->action, 'ROLE') => '/cms/roles',
-                    $log->table_name === 'berita' => '/cms/berita',
-                    $log->table_name === 'kesiapsiagaan' => '/cms/kesiapsiagaan',
-                    $log->table_name === 'early_warnings' => '/cms/alerts',
+                    $tableName === 'berita' => '/cms/berita',
+                    $tableName === 'kesiapsiagaan' => '/cms/kesiapsiagaan',
+                    $tableName === 'early_warnings' => '/cms/alerts',
                     default => null,
                 };
+
+                // SEC #10: also gate by the urlable tables whitelist.
+                $url = $tableName && in_array($tableName, ['laporan_bencana', 'berita', 'kesiapsiagaan', 'early_warnings'], true) ? $url : null;
 
                 return [
                     'id' => $log->id,
                     'title' => str_replace('_', ' ', $log->action),
-                    'message' => "{$log->table_name} #{$log->record_id}",
+                    'message' => "{$tableName} #{$recordId}",
                     'type' => $type,
                     'read' => false,
                     'created_at' => $log->created_at->toIso8601String(),

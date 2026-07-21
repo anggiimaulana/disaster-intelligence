@@ -32,7 +32,10 @@ class KesiapsiagaanController extends Controller
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string',
             'seo_keywords' => 'nullable|string|max:255',
-            'icon' => 'nullable|string|max:255',
+            // SEC #5/#6: thumbnail must be a real image mime (no SVG/JS/etc)
+            // and icon must be either a known Lucide name or a media-library URL.
+            'thumbnail' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg|max:5120',
+            'icon' => ['nullable', 'string', 'max:255', 'regex:/^(Lucide[A-Z][A-Za-z0-9]+|https?:\/\/[A-Za-z0-9._~:/?#@!$&\'()*+,;=%-]+|\/storage\/[A-Za-z0-9_\-.\/]+|media\/[A-Za-z0-9_\-.\/]+)$/'],
         ]);
 
         $slug = Str::slug($validated['title']);
@@ -41,7 +44,15 @@ class KesiapsiagaanController extends Controller
             $slug = "{$slug}-{$count}";
         }
 
-        $item = new Kesiapsiagaan($validated);
+        $item = new Kesiapsiagaan;
+        $item->fill([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'status' => $validated['status'],
+            'seo_title' => $validated['seo_title'] ?? null,
+            'seo_description' => $validated['seo_description'] ?? null,
+            'seo_keywords' => $validated['seo_keywords'] ?? null,
+        ]);
         $item->slug = $slug;
 
         if ($validated['status'] === 'published') {
@@ -75,7 +86,8 @@ class KesiapsiagaanController extends Controller
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string',
             'seo_keywords' => 'nullable|string|max:255',
-            'icon' => 'nullable|string|max:255',
+            'thumbnail' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg|max:5120',
+            'icon' => ['nullable', 'string', 'max:255', 'regex:/^(Lucide[A-Z][A-Za-z0-9]+|https?:\/\/[A-Za-z0-9._~:/?#@!$&\'()*+,;=%-]+|\/storage\/[A-Za-z0-9_\-.\/]+|media\/[A-Za-z0-9_\-.\/]+)$/'],
         ]);
 
         // Clear SEO fields if empty string sent

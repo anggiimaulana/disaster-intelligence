@@ -7,15 +7,45 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class SettingsController extends Controller
 {
+    /**
+     * Whitelist of editable scalar settings. Anything else is rejected
+     * (SEC code-review #2). File-upload keys (logo_file, favicon_file)
+     * and the array editor key are handled by separate routes.
+     */
+    private const SCALAR_KEYS = [
+        'app_name', 'app_description', 'app_instansi', 'app_lang',
+        'app_date_format', 'info_sumber_data',
+        'integration_wa_enabled', 'integration_n8n_enabled',
+        'integration_ai_enabled', 'integration_email_enabled',
+        'integration_sms_enabled',
+        'integration_wa_config_url', 'integration_n8n_config_url',
+        'integration_ai_config_url', 'integration_email_config_url',
+        'integration_sms_config_url',
+    ];
+
+    private const FILE_KEYS = [
+        'logo_file' => ['mimes:png,jpg,jpeg,svg', 'max:2048'],
+        'favicon_file' => ['mimes:ico,png,svg', 'max:512'],
+    ];
+
     /**
      * Upsert settings from request.
      */
     public function update(Request $request)
     {
         $data = $request->except(['_token', '_method']);
+
+        $fileRules = collect(self::FILE_KEYS)
+            ->flatMap(fn ($rules, $key) => [$key => $rules])
+            ->all();
+        $validated = collect($fileRules)
+            ->mapWithKeys(fn ($rules, $key) => [$key => array_merge(['sometimes'], $rules)])
+            ->all();
+        $request->validate($validated);
 
         foreach ($data as $key => $value) {
             if ($request->hasFile($key)) {
@@ -53,6 +83,11 @@ class SettingsController extends Controller
         }
 
         foreach ($data as $key => $value) {
+            // SEC code-review #2: ignore unknown keys so a privileged user
+            // can't write to arbitrary settings keys (e.g. ai_api_key).
+            if (! in_array($key, self::SCALAR_KEYS, true)) {
+                continue;
+            }
             Setting::updateOrCreate(
                 ['key' => $key],
                 ['value' => $value]
@@ -67,6 +102,11 @@ class SettingsController extends Controller
      */
     public function destroyArrayItem(Request $request, $key)
     {
+        // Only allow deletion from whitelisted array settings.
+        if (! in_array($key, ['n8n_endpoints'], true)) {
+            abort(404);
+        }
+
         $setting = Setting::where('key', $key)->first();
         if (! $setting) {
             return back();
@@ -105,10 +145,10 @@ class SettingsController extends Controller
     public function testAiConnection(Request $request)
     {
         $validated = $request->validate([
-            'ai_provider' => 'required|string',
-            'ai_base_url' => 'required|string',
-            'ai_model' => 'required|string',
-            'ai_api_key' => 'required|string',
+            'ai_provider' => ['required', 'string', Rule::in(['openai', 'claude', 'gemini'])],
+            'ai_base_url' => ['required', 'url'],
+            'ai_model' => 'required|string|max:255',
+            'ai_api_key' => 'required|string|max:500',
         ]);
 
         $provider = $validated['ai_provider'];
