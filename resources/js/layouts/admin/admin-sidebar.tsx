@@ -115,7 +115,7 @@ function NavItemComponent({ item, url }: { item: NavItem; url: string }) {
                     </div>
                     <ChevronDown className={cn('h-4 w-4 transition-transform duration-200', isOpen && 'rotate-180')} />
                 </button>
-                <div className={cn("overflow-hidden transition-all duration-200 ease-in-out", isOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0")}>
+                <div className={cn("overflow-hidden transition-all duration-200 ease-in-out", isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
                     <div className="mt-1 flex flex-col space-y-1 pl-10 pr-2">
                         {item.subItems.map((sub, idx) => {
                             const isSubActive = url.includes(sub.href);
