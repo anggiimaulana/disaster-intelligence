@@ -28,6 +28,21 @@ class MediaLibraryController extends Controller
 
         $media = $query->paginate(24);
 
+        if ($request->wantsJson() || $request->boolean('json')) {
+            return response()->json([
+                'media' => $media->through(fn ($m) => [
+                    'id' => $m->id,
+                    'file_path' => $m->file_path,
+                    'file_url' => $m->url,
+                    'original_name' => $m->original_name,
+                    'mime_type' => $m->mime_type,
+                    'file_type' => $m->file_type,
+                    'folder' => $m->folder,
+                ]),
+                'folders' => MediaLibrary::distinct()->pluck('folder')->filter()->values(),
+            ]);
+        }
+
         return Inertia::render('admin/media/index', [
             'media' => $media,
             'folders' => MediaLibrary::distinct()->pluck('folder')->filter()->toArray(),

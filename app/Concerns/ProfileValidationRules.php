@@ -18,6 +18,8 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'avatar_path' => ['nullable', 'string', 'max:255'],
         ];
     }
 

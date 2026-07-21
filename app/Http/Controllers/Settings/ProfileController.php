@@ -40,7 +40,14 @@ class ProfileController extends Controller
                 Storage::disk('public')->delete($request->user()->avatar);
             }
             $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } elseif (! empty($validated['avatar_path'])) {
+            if ($request->user()->avatar && $request->user()->avatar !== $validated['avatar_path']) {
+                Storage::disk('public')->delete($request->user()->avatar);
+            }
+            $validated['avatar'] = $validated['avatar_path'];
         }
+
+        unset($validated['avatar_path']);
 
         $request->user()->fill($validated);
 
