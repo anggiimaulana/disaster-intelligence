@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import { useForm, router } from '@inertiajs/react';
 import { config } from '@/config';
+import { parseSetting } from '@/lib/media';
 
 const defaultRiskThresholds = [
     { level: 'Rendah', range: '0 - 39', color: 'bg-green-500', notif: 'Tidak ada notifikasi', enabled: true },
@@ -18,22 +19,8 @@ const defaultNotifChannels = [
     { channel: 'Aplikasi (In-app)', rendah: true, sedang: true, tinggi: true, sangatTinggi: true },
 ];
 
-function parseSetting<T>(value: unknown, fallback: T): T {
-    if (value === null || value === undefined) return fallback;
-    if (Array.isArray(value) || typeof value === 'object') return value as T;
-    if (typeof value === 'string') {
-        try {
-            const parsed = JSON.parse(value);
-            return parsed ?? fallback;
-        } catch {
-            return fallback;
-        }
-    }
-    return fallback;
-}
-
-export default function TabPeringatan({ appSettings }: any) {
-    const { data, setData, processing } = useForm({
+export default function TabPeringatan({ appSettings = {} }: { appSettings?: Record<string, any> }) {
+    const { data, setData, post, processing } = useForm({
         risk_thresholds: parseSetting<any[]>(appSettings?.risk_thresholds, defaultRiskThresholds),
         notif_channels: parseSetting<any[]>(appSettings?.notif_channels, defaultNotifChannels),
         map_default_zoom: appSettings?.map_default_zoom || '10',

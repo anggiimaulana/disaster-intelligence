@@ -1,4 +1,3 @@
-import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { Loader2, Search, X, Image as ImageIcon, Upload } from 'lucide-react';
 
@@ -26,18 +25,6 @@ export function MediaLibraryPicker({ open, onClose, onSelect, accept = 'image/*'
     const [q, setQ] = useState('');
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
-
-    const load = (folderFilter: string, query: string) => {
-        setLoading(true);
-        const params: Record<string, string> = { json: '1' };
-        if (folderFilter) params.folder = folderFilter;
-        if (query) params.q = query;
-        router.get('/cms/media', params, {
-            preserveState: true,
-            preserveScroll: true,
-            only: [],
-        });
-    };
 
     useEffect(() => {
         if (!open) return;

@@ -2,6 +2,7 @@ import { Brain, Mail, MessageCircle, Send, Workflow, Plus, Trash2, Save, X, Load
 import { cn } from '@/lib/utils';
 import { useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
+import { safeArray } from '@/lib/media';
 
 const integrationsList = [
     { id: 'wa', name: 'WhatsApp Gateway', desc: 'Terhubung ke WhatsApp Business API untuk notifikasi broadcast.', icon: MessageCircle },
@@ -13,11 +14,6 @@ const integrationsList = [
 
 const settingKey = (id: string) => `integration_${id}_enabled`;
 const configKey = (id: string) => `integration_${id}_config_url`;
-
-function safeArray<T>(value: unknown): T[] {
-    if (Array.isArray(value)) return value as T[];
-    return [];
-}
 
 export default function TabIntegrasi({ appSettings = {} }: { appSettings?: Record<string, unknown> }) {
     const [integrations, setIntegrations] = useState(() =>

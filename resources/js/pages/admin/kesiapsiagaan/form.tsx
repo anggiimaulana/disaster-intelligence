@@ -5,6 +5,7 @@ import RichTextEditor from '@/components/ui/rich-text-editor';
 import IconPicker from '@/components/ui/icon-picker';
 import SeoAnalyzer from '@/components/ui/seo-analyzer';
 import { MediaLibraryPicker } from '@/components/ui/media-library-picker';
+import { isMediaIcon } from '@/lib/media';
 
 interface Item {
     id: number;
@@ -17,10 +18,6 @@ interface Item {
     seo_title: string | null;
     seo_description: string | null;
     seo_keywords: string | null;
-}
-
-function isMediaIcon(value: string | null | undefined) {
-    return !!value && (/^https?:\/\//.test(value) || value.startsWith('/storage/') || value.startsWith('media/'));
 }
 
 export default function KesiapsiagaanForm() {

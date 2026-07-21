@@ -29,7 +29,7 @@ const PROVIDERS = [
     },
 ];
 
-export default function TabAI({ appSettings }: any) {
+export default function TabAI({ appSettings = {} }: { appSettings?: Record<string, any> }) {
     const { data, setData, post, processing } = useForm({
         ai_provider: appSettings?.ai_provider || 'openai-compatible',
         ai_base_url: appSettings?.ai_base_url || '',

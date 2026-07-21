@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { isMediaIcon } from '@/lib/media';
 import {
     AlertTriangle,
     Plus,
@@ -58,8 +59,6 @@ export default function DisasterTypes({ title, disasterTypes }: PageProps) {
     const [submitting, setSubmitting] = useState(false);
     const [iconSearch, setIconSearch] = useState('');
     const [showMediaPicker, setShowMediaPicker] = useState(false);
-
-    const isMediaIcon = (value: string) => /^https?:\/\//.test(value) || value.startsWith('/storage/') || value.startsWith('media/');
 
     const filteredIcons = allIconKeys
         .filter(k => k.toLowerCase().includes(iconSearch.toLowerCase()))

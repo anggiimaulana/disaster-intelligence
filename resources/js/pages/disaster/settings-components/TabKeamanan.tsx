@@ -1,22 +1,9 @@
 import { KeyRound, ShieldAlert, Smartphone, Save } from 'lucide-react';
 import { useForm, router } from '@inertiajs/react';
+import { parseSetting } from '@/lib/media';
 
-function parseSetting<T>(value: unknown, fallback: T): T {
-    if (value === null || value === undefined) return fallback;
-    if (Array.isArray(value) || typeof value === 'object') return value as T;
-    if (typeof value === 'string') {
-        try {
-            const parsed = JSON.parse(value);
-            return parsed ?? fallback;
-        } catch {
-            return fallback;
-        }
-    }
-    return fallback;
-}
-
-export default function TabKeamanan({ appSettings }: any) {
-    const { data, setData, processing } = useForm({
+export default function TabKeamanan({ appSettings = {} }: { appSettings?: Record<string, any> }) {
+    const { data, setData, post, processing } = useForm({
         security_2fa_enabled: String(appSettings?.security_2fa_enabled) === '1' || appSettings?.security_2fa_enabled === true,
         security_2fa_methods: parseSetting<string[]>(appSettings?.security_2fa_methods, ['authenticator', 'webauthn']),
         password_min_length: appSettings?.password_min_length || '12',

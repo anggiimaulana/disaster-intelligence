@@ -2,7 +2,7 @@ import { Shield, Upload, X, Trash2 } from 'lucide-react';
 import { useForm, router } from '@inertiajs/react';
 import { useState, useRef } from 'react';
 
-export default function TabUmum({ appSettings }: any) {
+export default function TabUmum({ appSettings = {} }: { appSettings?: Record<string, any> }) {
     const [logoPreview, setLogoPreview] = useState(appSettings?.logo_url || '/icon.png');
     const [faviconPreview, setFaviconPreview] = useState(appSettings?.favicon_url || '/favicon.ico');
 
