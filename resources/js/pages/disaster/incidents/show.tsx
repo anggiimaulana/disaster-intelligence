@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { cn, formatDate, getDisasterLabel } from '@/lib/utils';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ArrowLeft, AlertTriangle, Bell, Brain, CheckSquare, Clock, Copy, Download, ExternalLink, FileText, MapPin, MessageCircle, Phone, Share2, Waves, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Bell, Brain, Check, CheckSquare, Clock, Copy, Download, ExternalLink, FileText, MapPin, MessageCircle, Phone, Share2, Waves, X, Loader2 } from 'lucide-react';
 import type { LaporanDetailProps } from '@/types';
 import { config } from '@/config';
 
@@ -11,6 +11,20 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
     const [showWarningModal, setShowWarningModal] = useState(false);
     const [warningForm, setWarningForm] = useState({ level_warning: 'Waspada', pesan: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [shareCopied, setShareCopied] = useState(false);
+
+    const reportCode = report.laporan_id.replace('#', '');
+
+    const handleShare = async () => {
+        const url = window.location.href;
+        try {
+            await navigator.clipboard.writeText(url);
+            setShareCopied(true);
+            window.setTimeout(() => setShareCopied(false), 2000);
+        } catch {
+            window.prompt('Salin URL ini:', url);
+        }
+    };
 
     // Map disaster type to jenis_bencana_id (1=Banjir, 2=Longsor, 3=Kebakaran, 4=Angin Kencang, 5=Lainnya)
     const jenisBencanaMap: Record<string, number> = {
@@ -59,12 +73,21 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
                     <ArrowLeft className="h-4 w-4" /> Kembali
                 </Link>
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
-                        <Share2 className="h-4 w-4" /> Bagikan
+                    <button
+                        onClick={handleShare}
+                        className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                    >
+                        {shareCopied ? <Check className="h-4 w-4 text-green-600" /> : <Share2 className="h-4 w-4" />}
+                        {shareCopied ? 'Tersalin' : 'Bagikan'}
                     </button>
-                    <button className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
+                    <a
+                        href={`/cms/incidents/${reportCode}/pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                    >
                         <Download className="h-4 w-4" /> Unduh PDF
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -283,7 +306,7 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
                     <Link href={`/cms/incidents/${report.laporan_id.replace('#', '')}/analysis`} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">
                         <Brain className="h-4 w-4" /> Analisis AI
                     </Link>
-                    <Link href={`/cms/validation/${report.database_id}`} className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                    <Link href={`/cms/validation/${report.id}`} className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
                         <CheckSquare className="h-4 w-4" /> Validasi Laporan
                     </Link>
                     <button onClick={() => setShowWarningModal(true)} className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">

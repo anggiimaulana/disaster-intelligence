@@ -104,6 +104,7 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     // Incidents (Data Kejadian)
     Route::get('incidents', [KejadianController::class, 'index'])->name('incidents.index');
     Route::get('incidents/{laporan}', [KejadianController::class, 'show'])->name('incidents.show');
+    Route::get('incidents/{laporan}/pdf', [KejadianController::class, 'exportReportPdf'])->name('incidents.show.pdf');
     Route::get('incidents/export', [KejadianController::class, 'export'])->name('incidents.export');
 
     // Analysis (Analisis AI)

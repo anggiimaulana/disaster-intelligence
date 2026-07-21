@@ -8,6 +8,7 @@ use App\Models\LaporanBencana;
 use App\Models\StatusLaporan;
 use App\Models\SupportedRegency;
 use App\Models\Wilayah;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Str;
@@ -286,6 +287,20 @@ class KejadianController extends Controller
         return $phone;
     }
 
+    public function exportReportPdf(string $laporan)
+    {
+        $laporanId = str_replace('#', '', $laporan);
+        $report = LaporanBencana::with([
+            'jenisBencana:id,kode,nama_bencana,warna',
+            'status:id,nama_status,warna',
+            'wilayah:id,provinsi,kabupaten,kecamatan,desa',
+        ])->where('kode_laporan', $laporanId)->firstOrFail();
+
+        $pdf = Pdf::loadView('pdf.laporan', ['laporan' => $report]);
+
+        return $pdf->download('Laporan-'.$report->kode_laporan.'.pdf');
+    }
+
     public function export(Request $request): HttpResponse
     {
         $format = $request->input('format', 'excel');
@@ -378,8 +393,13 @@ class KejadianController extends Controller
         })->toArray();
 
         if ($format === 'pdf') {
-            // For PDF, return CSV as fallback (can be enhanced with actual PDF library)
-            $format = 'csv';
+            $pdf = Pdf::loadView('pdf.incidents-list', [
+                'headers' => $headers,
+                'rows' => $rows,
+                'generatedAt' => now()->format('d M Y H:i'),
+            ])->setPaper('a4', 'landscape');
+
+            return $pdf->download('laporan-kejadian-'.now()->format('Ymd-His').'.pdf');
         }
 
         if ($format === 'csv') {
