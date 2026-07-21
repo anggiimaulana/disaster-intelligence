@@ -8,6 +8,7 @@ use App\Models\EarlyWarning;
 use App\Models\Faq;
 use App\Models\Kesiapsiagaan;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -58,7 +59,7 @@ class InformationController extends Controller
                 'category' => $n->kategori ?? 'news',
                 'title' => $n->judul ?? $n->title,
                 'excerpt' => strip_tags(substr($n->konten ?? $n->content, 0, 150)).'...',
-                'imageUrl' => $n->thumbnail ?? 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+                'imageUrl' => $n->thumbnail ? Storage::url($n->thumbnail) : 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
                 'publishedAt' => $n->published_at ? $n->published_at->toIso8601String() : $n->created_at->toIso8601String(),
                 'tags' => $n->seo_keywords ? explode(',', $n->seo_keywords) : ['informasi'],
             ];
@@ -81,7 +82,7 @@ class InformationController extends Controller
             'category' => $n->kategori ?? 'news',
             'title' => $n->judul ?? $n->title,
             'content' => $n->konten ?? $n->content,
-            'imageUrl' => $n->thumbnail ?? 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+            'imageUrl' => $n->thumbnail ? Storage::url($n->thumbnail) : 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
             'publishedAt' => $n->published_at ? $n->published_at->toIso8601String() : $n->created_at->toIso8601String(),
             'tags' => $n->seo_keywords ? explode(',', $n->seo_keywords) : ['informasi'],
         ];
@@ -93,7 +94,7 @@ class InformationController extends Controller
                 'category' => $r->kategori ?? 'news',
                 'title' => $r->judul ?? $r->title,
                 'excerpt' => strip_tags(substr($r->konten ?? $r->content, 0, 150)).'...',
-                'imageUrl' => $r->thumbnail ?? 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+                'imageUrl' => $r->thumbnail ? Storage::url($r->thumbnail) : 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
                 'publishedAt' => $r->published_at ? $r->published_at->toIso8601String() : $r->created_at->toIso8601String(),
             ];
         });
