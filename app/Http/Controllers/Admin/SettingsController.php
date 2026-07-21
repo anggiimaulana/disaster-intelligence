@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class SettingsController extends Controller
 {
@@ -51,5 +52,87 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'Item berhasil dihapus.');
+    }
+
+    public function testAiConnection(Request $request)
+    {
+        $validated = $request->validate([
+            'ai_provider' => 'required|string',
+            'ai_base_url' => 'required|string',
+            'ai_model' => 'required|string',
+            'ai_api_key' => 'required|string',
+        ]);
+
+        $provider = $validated['ai_provider'];
+        $baseUrl = rtrim($validated['ai_base_url'], '/');
+        $model = $validated['ai_model'];
+        $apiKey = $validated['ai_api_key'];
+
+        try {
+            $startTime = microtime(true);
+
+            match ($provider) {
+                'claude' => $this->testClaude($baseUrl, $model, $apiKey),
+                'gemini' => $this->testGemini($baseUrl, $model, $apiKey),
+                default => $this->testOpenAI($baseUrl, $model, $apiKey),
+            };
+
+            $latency = round((microtime(true) - $startTime) * 1000);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Koneksi berhasil! ($latency ms)",
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Koneksi gagal: '.$e->getMessage(),
+            ]);
+        }
+    }
+
+    private function testOpenAI(string $baseUrl, string $model, string $apiKey): void
+    {
+        $response = Http::withToken($apiKey)
+            ->timeout(15)
+            ->post("$baseUrl/chat/completions", [
+                'model' => $model,
+                'messages' => [['role' => 'user', 'content' => 'Test']],
+                'max_tokens' => 1,
+            ]);
+
+        if (! $response->successful()) {
+            throw new \Exception($response->json('error.message') ?? $response->body());
+        }
+    }
+
+    private function testClaude(string $baseUrl, string $model, string $apiKey): void
+    {
+        $response = Http::withHeaders([
+            'x-api-key' => $apiKey,
+            'anthropic-version' => '2023-06-01',
+        ])
+            ->timeout(15)
+            ->post("$baseUrl/v1/messages", [
+                'model' => $model,
+                'messages' => [['role' => 'user', 'content' => 'Test']],
+                'max_tokens' => 1,
+            ]);
+
+        if (! $response->successful()) {
+            throw new \Exception($response->json('error.message') ?? $response->body());
+        }
+    }
+
+    private function testGemini(string $baseUrl, string $model, string $apiKey): void
+    {
+        $response = Http::timeout(15)
+            ->post("$baseUrl/models/$model:generateContent?key=$apiKey", [
+                'contents' => [['parts' => [['text' => 'Test']]]],
+            ]);
+
+        if (! $response->successful()) {
+            throw new \Exception($response->json('error.message') ?? $response->body());
+        }
     }
 }

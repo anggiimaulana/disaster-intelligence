@@ -179,6 +179,7 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     Route::get('settings/umum', fn () => Inertia::render('settings/tabs/umum', ['appSettings' => $getAppSettings()]))->name('settings.umum');
     Route::get('settings/integrasi', fn () => Inertia::render('settings/tabs/integrasi', ['appSettings' => $getAppSettings()]))->name('settings.integrasi');
     Route::get('settings/ai', fn () => Inertia::render('settings/tabs/ai', ['appSettings' => $getAppSettings()]))->name('settings.ai');
+    Route::post('settings/ai/test', [SettingsController::class, 'testAiConnection'])->name('settings.ai.test');
     Route::get('settings/peringatan', fn () => Inertia::render('settings/tabs/peringatan', ['appSettings' => $getAppSettings()]))->name('settings.peringatan');
     Route::get('settings/pengguna', fn () => Inertia::render('settings/tabs/pengguna', ['appSettings' => $getAppSettings()]))->name('settings.pengguna');
     Route::get('settings/keamanan', fn () => Inertia::render('settings/tabs/keamanan', ['appSettings' => $getAppSettings()]))->name('settings.keamanan');

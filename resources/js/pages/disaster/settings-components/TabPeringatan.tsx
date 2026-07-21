@@ -23,8 +23,8 @@ export default function TabPeringatan({ appSettings }: any) {
         risk_thresholds: appSettings?.risk_thresholds ? JSON.parse(appSettings.risk_thresholds) : defaultRiskThresholds,
         notif_channels: appSettings?.notif_channels ? JSON.parse(appSettings.notif_channels) : defaultNotifChannels,
         map_default_zoom: appSettings?.map_default_zoom || '10',
-        map_layer_risiko: appSettings?.map_layer_risiko === undefined ? true : (appSettings.map_layer_risiko === '1' || appSettings.map_layer_risiko === true),
-        map_cluster_marker: appSettings?.map_cluster_marker === undefined ? true : (appSettings.map_cluster_marker === '1' || appSettings.map_cluster_marker === true),
+        map_layer_risiko: appSettings?.map_layer_risiko === undefined ? true : (String(appSettings.map_layer_risiko) === '1' || appSettings.map_layer_risiko === true),
+        map_cluster_marker: appSettings?.map_cluster_marker === undefined ? true : (String(appSettings.map_cluster_marker) === '1' || appSettings.map_cluster_marker === true),
     });
 
     const handleSubmit = (e: React.FormEvent) => {

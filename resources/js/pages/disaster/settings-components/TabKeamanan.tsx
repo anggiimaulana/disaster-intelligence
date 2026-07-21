@@ -3,12 +3,12 @@ import { useForm } from '@inertiajs/react';
 
 export default function TabKeamanan({ appSettings }: any) {
     const { data, setData, post, processing, transform } = useForm({
-        security_2fa_enabled: appSettings?.security_2fa_enabled === '1' || appSettings?.security_2fa_enabled === true || false,
+        security_2fa_enabled: String(appSettings?.security_2fa_enabled) === '1' || appSettings?.security_2fa_enabled === true,
         security_2fa_methods: appSettings?.security_2fa_methods ? JSON.parse(appSettings.security_2fa_methods) : ['authenticator', 'webauthn'],
         password_min_length: appSettings?.password_min_length || '12',
-        password_require_case: appSettings?.password_require_case === '1' || appSettings?.password_require_case === true || false,
-        password_require_numbers: appSettings?.password_require_numbers === '1' || appSettings?.password_require_numbers === true || false,
-        password_require_symbols: appSettings?.password_require_symbols === '1' || appSettings?.password_require_symbols === true || false,
+        password_require_case: String(appSettings?.password_require_case) === '1' || appSettings?.password_require_case === true,
+        password_require_numbers: String(appSettings?.password_require_numbers) === '1' || appSettings?.password_require_numbers === true,
+        password_require_symbols: String(appSettings?.password_require_symbols) === '1' || appSettings?.password_require_symbols === true,
         password_force_change_days: appSettings?.password_force_change_days || '90',
         session_timeout_minutes: appSettings?.session_timeout_minutes || '30',
         login_max_attempts: appSettings?.login_max_attempts || '5',
