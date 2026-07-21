@@ -1,4 +1,4 @@
-import { Head, usePage, router } from '@inertiajs/react';
+import { Head, usePage, router, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Sparkline } from '@/components/disaster/sparkline';
@@ -90,12 +90,11 @@ export default function Validation() {
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [selectedReport, setSelectedReport] = useState<typeof laporan.data[0] | null>(null);
-    const [showDetailModal, setShowDetailModal] = useState(false);
-    const [isValidating, setIsValidating] = useState(false);
     const [validationResult, setValidationResult] = useState<{
         hasil: string;
         catatan: string;
     } | null>(null);
+    const validateForm = useForm<{ catatan: string }>({ catatan: '' });
 
     // Select first report by default
     useEffect(() => {
@@ -109,82 +108,48 @@ export default function Validation() {
         setSelectedId(report.id);
         setSelectedReport(report);
         setValidationResult(null);
+        validateForm.reset();
+        validateForm.clearErrors();
     };
 
-    const handleValidate = async (hasil: string) => {
+    const handleValidate = (hasil: string) => {
         if (!selectedId) return;
 
-        setIsValidating(true);
-        try {
-            const response = await fetch(`/cms/validation/${selectedId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    hasil_validasi: hasil,
-                    catatan: validationResult?.catatan || '',
-                }),
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                setValidationResult({ hasil, catatan: validationResult?.catatan || '' });
-                // Refresh data
-                router.reload({
-                    only: ['laporan'],
-                    onSuccess: (page) => {
-                        const updatedLaporan = (page.props as any).laporan;
-                        const updatedReport = updatedLaporan.data.find((r: any) => r.id === selectedId);
-                        if (updatedReport) {
-                            setSelectedReport(updatedReport);
-                        }
-                    },
-                });
-            } else {
-                alert(result.message || 'Terjadi kesalahan');
-            }
-        } catch (error) {
-            alert('Terjadi kesalahan koneksi');
-        } finally {
-            setIsValidating(false);
-        }
+        validateForm.setData('catatan', validateForm.data.catatan);
+        router.post(`/cms/validation/${selectedId}`, {
+            hasil_validasi: hasil,
+            catatan: validateForm.data.catatan,
+        }, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                setValidationResult({ hasil, catatan: validateForm.data.catatan });
+                const updatedLaporan = (page.props as any).laporan;
+                const updatedReport = updatedLaporan?.data?.find((r: any) => r.id === selectedId);
+                if (updatedReport) {
+                    setSelectedReport(updatedReport);
+                }
+            },
+            onError: () => {
+                window.alert('Gagal menyimpan validasi. Periksa isian Anda.');
+            },
+        });
     };
 
-    const handleStatusChange = async (statusId: number) => {
+    const handleStatusChange = (statusId: number) => {
         if (!selectedId) return;
 
-        try {
-            const response = await fetch(`/cms/validation/${selectedId}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ status_id: statusId }),
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                router.reload({
-                    only: ['laporan'],
-                    onSuccess: (page) => {
-                        const updatedLaporan = (page.props as any).laporan;
-                        const updatedReport = updatedLaporan.data.find((r: any) => r.id === selectedId);
-                        if (updatedReport) {
-                            setSelectedReport(updatedReport);
-                        }
-                    },
-                });
-            }
-        } catch (error) {
-            alert('Terjadi kesalahan koneksi');
-        }
+        router.patch(`/cms/validation/${selectedId}/status`, {
+            status_id: statusId,
+        }, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const updatedLaporan = (page.props as any).laporan;
+                const updatedReport = updatedLaporan?.data?.find((r: any) => r.id === selectedId);
+                if (updatedReport) {
+                    setSelectedReport(updatedReport);
+                }
+            },
+        });
     };
 
     const statsData = [
@@ -440,11 +405,14 @@ export default function Validation() {
                                 <div className="mb-4 rounded-lg border border-slate-100 p-4">
                                     <h4 className="mb-2 text-sm font-bold text-slate-900">Catatan Petugas</h4>
                                     <textarea
-                                        value={validationResult?.catatan || ''}
-                                        onChange={(e) => setValidationResult(prev => ({ ...prev!, catatan: e.target.value }))}
+                                        value={validateForm.data.catatan}
+                                        onChange={(e) => validateForm.setData('catatan', e.target.value)}
                                         placeholder="Tulis catatan atau hasil observasi..."
                                         className="h-20 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                     />
+                                    {validateForm.errors.catatan && (
+                                        <p className="mt-1 text-xs text-red-600">{validateForm.errors.catatan}</p>
+                                    )}
                                 </div>
 
                                 {/* Validation Result */}
@@ -469,10 +437,15 @@ export default function Validation() {
                                 {/* Validation Actions */}
                                 <div className="border-t border-slate-200 pt-5">
                                     <h4 className="mb-3 text-sm font-bold text-slate-900">Keputusan Validasi</h4>
+                                    {!selectedReport.validasi_ai && (
+                                        <p className="mb-3 text-xs text-amber-600">
+                                            Tunggu analisis AI selesai sebelum melakukan validasi.
+                                        </p>
+                                    )}
                                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                                         <button
                                             onClick={() => handleValidate('valid')}
-                                            disabled={isValidating || selectedReport.validasi_ai}
+                                            disabled={validateForm.processing || !selectedReport.validasi_ai}
                                             className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-green-300 bg-green-50 p-4 text-center transition-all hover:bg-green-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <CheckCircle className="h-6 w-6 text-green-600" />
@@ -481,7 +454,7 @@ export default function Validation() {
                                         </button>
                                         <button
                                             onClick={() => handleValidate('invalid')}
-                                            disabled={isValidating || selectedReport.validasi_ai}
+                                            disabled={validateForm.processing || !selectedReport.validasi_ai}
                                             className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-red-300 bg-red-50 p-4 text-center transition-all hover:bg-red-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <XCircle className="h-6 w-6 text-red-600" />
@@ -490,7 +463,7 @@ export default function Validation() {
                                         </button>
                                         <button
                                             onClick={() => handleValidate('spam')}
-                                            disabled={isValidating || selectedReport.validasi_ai}
+                                            disabled={validateForm.processing || !selectedReport.validasi_ai}
                                             className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-center transition-all hover:bg-amber-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <AlertTriangle className="h-6 w-6 text-amber-600" />
@@ -499,7 +472,7 @@ export default function Validation() {
                                         </button>
                                         <button
                                             onClick={() => handleValidate('duplikat')}
-                                            disabled={isValidating || selectedReport.validasi_ai}
+                                            disabled={validateForm.processing || !selectedReport.validasi_ai}
                                             className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-purple-300 bg-purple-50 p-4 text-center transition-all hover:bg-purple-100 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Copy className="h-6 w-6 text-purple-600" />
@@ -542,7 +515,7 @@ export default function Validation() {
                                     </div>
                                 )}
 
-                                {isValidating && (
+                                {validateForm.processing && (
                                     <div className="mt-4 flex items-center justify-center gap-2 text-blue-600">
                                         <Loader2 className="h-5 w-5 animate-spin" />
                                         <span>Menyimpan validasi...</span>
