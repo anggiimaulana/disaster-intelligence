@@ -134,15 +134,20 @@ export default function TabAI({ appSettings }: any) {
                                     <Server className="h-3.5 w-3.5" /> Model
                                 </span>
                             </label>
-                            <select
+                            <input
+                                type="text"
                                 value={data.ai_model}
                                 onChange={(e) => setData('ai_model', e.target.value)}
-                                className="block w-full rounded-lg border border-slate-200 py-2.5 pl-3 pr-10 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 bg-slate-50 focus:bg-white transition-colors"
-                            >
+                                placeholder={selectedProvider.models[0] || 'Ketik nama model...'}
+                                list="ai-model-suggestions"
+                                className="block w-full rounded-lg border border-slate-200 py-2.5 pl-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 bg-slate-50 focus:bg-white transition-colors font-mono text-xs"
+                            />
+                            <datalist id="ai-model-suggestions">
                                 {selectedProvider.models.map((model) => (
-                                    <option key={model} value={model}>{model}</option>
+                                    <option key={model} value={model} />
                                 ))}
-                            </select>
+                            </datalist>
+                            <p className="mt-1 text-xs text-slate-500">Ketik manual atau pilih dari saran. Bebas pakai model apapun dari provider.</p>
                         </div>
 
                         {/* API Key */}
