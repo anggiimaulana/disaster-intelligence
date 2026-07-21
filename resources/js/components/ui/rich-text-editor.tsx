@@ -6,7 +6,9 @@ import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { MediaLibraryPicker } from './media-library-picker';
 import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough,
     List, ListOrdered, Quote, Heading1, Heading2, Heading3,
@@ -20,6 +22,7 @@ interface RichTextEditorProps {
     placeholder?: string;
     minHeight?: string;
     className?: string;
+    enableMediaLibrary?: boolean;
 }
 
 function ToolbarButton({
@@ -52,7 +55,7 @@ function ToolbarDivider() {
     return <div className="mx-1 h-6 w-px bg-slate-200" />;
 }
 
-function MenuBar({ editor }: { editor: Editor }) {
+function MenuBar({ editor, onImageButtonClick }: { editor: Editor; onImageButtonClick: () => void }) {
     const addLink = () => {
         const url = window.prompt('Masukkan URL:');
         if (url) {
@@ -60,16 +63,8 @@ function MenuBar({ editor }: { editor: Editor }) {
         }
     };
 
-    const addImage = () => {
-        const url = window.prompt('Masukkan URL gambar:');
-        if (url) {
-            editor.chain().focus().setImage({ src: url }).run();
-        }
-    };
-
     return (
         <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-200 bg-slate-50/80 px-2 py-1.5">
-            {/* Headings */}
             <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} title="Heading 1">
                 <Heading1 className="h-4 w-4" />
             </ToolbarButton>
@@ -82,7 +77,6 @@ function MenuBar({ editor }: { editor: Editor }) {
 
             <ToolbarDivider />
 
-            {/* Text formatting */}
             <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold">
                 <Bold className="h-4 w-4" />
             </ToolbarButton>
@@ -104,7 +98,6 @@ function MenuBar({ editor }: { editor: Editor }) {
 
             <ToolbarDivider />
 
-            {/* Lists */}
             <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List">
                 <List className="h-4 w-4" />
             </ToolbarButton>
@@ -120,7 +113,6 @@ function MenuBar({ editor }: { editor: Editor }) {
 
             <ToolbarDivider />
 
-            {/* Alignment */}
             <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Rata Kiri">
                 <AlignLeft className="h-4 w-4" />
             </ToolbarButton>
@@ -133,17 +125,15 @@ function MenuBar({ editor }: { editor: Editor }) {
 
             <ToolbarDivider />
 
-            {/* Links & Media */}
             <ToolbarButton onClick={addLink} isActive={editor.isActive('link')} title="Tambah Link">
                 <LinkIcon className="h-4 w-4" />
             </ToolbarButton>
-            <ToolbarButton onClick={addImage} title="Tambah Gambar">
+            <ToolbarButton onClick={onImageButtonClick} title="Tambah Gambar">
                 <ImageIcon className="h-4 w-4" />
             </ToolbarButton>
 
             <ToolbarDivider />
 
-            {/* Undo / Redo */}
             <ToolbarButton onClick={() => editor.chain().focus().undo().run()} title="Undo">
                 <Undo2 className="h-4 w-4" />
             </ToolbarButton>
@@ -160,7 +150,11 @@ export default function RichTextEditor({
     placeholder = 'Mulai menulis di sini...',
     minHeight = '300px',
     className,
+    enableMediaLibrary = false,
 }: RichTextEditorProps) {
+    const [showPicker, setShowPicker] = useState(false);
+    const [pendingEditor, setPendingEditor] = useState<Editor | null>(null);
+
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -192,6 +186,27 @@ export default function RichTextEditor({
         },
     });
 
+    const handleImageButtonClick = () => {
+        if (!editor) return;
+        if (enableMediaLibrary) {
+            setPendingEditor(editor);
+            setShowPicker(true);
+        } else {
+            const url = window.prompt('Masukkan URL gambar:');
+            if (url) {
+                editor.chain().focus().setImage({ src: url }).run();
+            }
+        }
+    };
+
+    const handleMediaSelect = (media: { file_path: string; file_url: string }) => {
+        if (pendingEditor) {
+            pendingEditor.chain().focus().setImage({ src: media.file_url }).run();
+        }
+        setShowPicker(false);
+        setPendingEditor(null);
+    };
+
     if (!editor) {
         return (
             <div className="rounded-lg border border-slate-200 bg-white">
@@ -204,10 +219,29 @@ export default function RichTextEditor({
         );
     }
 
+    const text = editor.getText();
+    const charCount = text.length;
+    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
     return (
-        <div className={cn('overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500', className)}>
-            <MenuBar editor={editor} />
-            <EditorContent editor={editor} />
-        </div>
+        <>
+            <div className={cn('overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500', className)}>
+                <MenuBar editor={editor} onImageButtonClick={handleImageButtonClick} />
+                <EditorContent editor={editor} />
+                <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-500">
+                    <span>{charCount} karakter</span>
+                    <span>{wordCount} kata</span>
+                </div>
+            </div>
+
+            {enableMediaLibrary && (
+                <MediaLibraryPicker
+                    open={showPicker}
+                    onClose={() => { setShowPicker(false); setPendingEditor(null); }}
+                    onSelect={handleMediaSelect}
+                    accept="image/*"
+                />
+            )}
+        </>
     );
 }
