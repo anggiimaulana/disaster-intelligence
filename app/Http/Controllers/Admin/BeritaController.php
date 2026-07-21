@@ -34,6 +34,7 @@ class BeritaController extends Controller
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string',
             'seo_keywords' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
         ]);
 
         $slug = Str::slug($validated['title']);
@@ -52,6 +53,10 @@ class BeritaController extends Controller
         if ($request->hasFile('thumbnail')) {
             $path = $request->file('thumbnail')->store('berita', 'public');
             $berita->thumbnail = $path;
+            $berita->icon = null;
+        } elseif (! empty($validated['icon'])) {
+            $berita->icon = $validated['icon'];
+            $berita->thumbnail = null;
         }
 
         $berita->save();
@@ -75,6 +80,7 @@ class BeritaController extends Controller
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string',
             'seo_keywords' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
         ]);
 
         // Clear SEO fields if empty string sent
@@ -103,6 +109,15 @@ class BeritaController extends Controller
             }
             $path = $request->file('thumbnail')->store('berita', 'public');
             $berita->thumbnail = $path;
+            $berita->icon = null;
+        } elseif (array_key_exists('icon', $validated)) {
+            if ($berita->icon !== $validated['icon'] && $berita->thumbnail) {
+                Storage::disk('public')->delete($berita->thumbnail);
+            }
+            $berita->icon = $validated['icon'] ?: null;
+            if (! empty($validated['icon'])) {
+                $berita->thumbnail = null;
+            }
         }
 
         $berita->save();

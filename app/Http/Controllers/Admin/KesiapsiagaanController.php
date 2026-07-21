@@ -32,6 +32,7 @@ class KesiapsiagaanController extends Controller
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string',
             'seo_keywords' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
         ]);
 
         $slug = Str::slug($validated['title']);
@@ -49,6 +50,10 @@ class KesiapsiagaanController extends Controller
 
         if ($request->hasFile('thumbnail')) {
             $item->thumbnail = $request->file('thumbnail')->store('kesiapsiagaan', 'public');
+            $item->icon = null;
+        } elseif (! empty($validated['icon'])) {
+            $item->icon = $validated['icon'];
+            $item->thumbnail = null;
         }
 
         $item->save();
@@ -70,6 +75,7 @@ class KesiapsiagaanController extends Controller
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string',
             'seo_keywords' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
         ]);
 
         // Clear SEO fields if empty string sent
@@ -95,6 +101,15 @@ class KesiapsiagaanController extends Controller
                 Storage::disk('public')->delete($kesiapsiagaan->thumbnail);
             }
             $validated['thumbnail'] = $request->file('thumbnail')->store('kesiapsiagaan', 'public');
+            $validated['icon'] = null;
+        } elseif (array_key_exists('icon', $validated)) {
+            if ($kesiapsiagaan->icon !== $validated['icon'] && $kesiapsiagaan->thumbnail) {
+                Storage::disk('public')->delete($kesiapsiagaan->thumbnail);
+            }
+            $validated['icon'] = $validated['icon'] ?: null;
+            if (! empty($validated['icon'])) {
+                $validated['thumbnail'] = null;
+            }
         }
 
         $kesiapsiagaan->update($validated);
