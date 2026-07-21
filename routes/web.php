@@ -25,8 +25,10 @@ use App\Http\Controllers\Public\TrackingController;
 use App\Http\Controllers\Public\WilayahController;
 use App\Http\Controllers\Validasi\ValidasiController;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -181,7 +183,22 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     Route::get('settings/ai', fn () => Inertia::render('settings/tabs/ai', ['appSettings' => $getAppSettings()]))->name('settings.ai');
     Route::post('settings/ai/test', [SettingsController::class, 'testAiConnection'])->name('settings.ai.test');
     Route::get('settings/peringatan', fn () => Inertia::render('settings/tabs/peringatan', ['appSettings' => $getAppSettings()]))->name('settings.peringatan');
-    Route::get('settings/pengguna', fn () => Inertia::render('settings/tabs/pengguna', ['appSettings' => $getAppSettings()]))->name('settings.pengguna');
+    Route::get('settings/pengguna', function () {
+        return Inertia::render('settings/tabs/pengguna', [
+            'appSettings' => Setting::pluck('value', 'key')->toArray(),
+            'users' => User::with('roles:id,name')->orderBy('name')
+                ->get(['id', 'name', 'email', 'is_admin', 'created_at'])
+                ->map(fn ($u) => [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'is_admin' => (bool) $u->is_admin,
+                    'roles' => $u->roles->pluck('name'),
+                    'created_at' => $u->created_at?->toIso8601String(),
+                ]),
+            'roles' => Role::orderBy('name')->get(['id', 'name']),
+        ]);
+    })->name('settings.pengguna');
     Route::get('settings/keamanan', fn () => Inertia::render('settings/tabs/keamanan', ['appSettings' => $getAppSettings()]))->name('settings.keamanan');
     Route::get('settings/backup', fn () => Inertia::render('settings/tabs/backup'))->name('settings.backup');
     Route::get('settings/log', [PengaturanController::class, 'log'])->name('settings.log');
