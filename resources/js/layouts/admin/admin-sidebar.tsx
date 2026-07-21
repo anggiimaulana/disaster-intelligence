@@ -172,8 +172,9 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
                 {/* Navigation */}
                 <nav className="flex-1 space-y-3 overflow-y-auto px-3 py-2">
                     {navGroups.map((group, gi) => {
-                        const userPermissions = (usePage().props.auth?.user?.permissions as string[]) || [];
-                        const isSuperAdmin = usePage().props.auth?.user?.email === 'admin@bpbd.id' || false;
+                        const user = usePage().props.auth?.user;
+                        const userPermissions = (user?.permissions as string[]) || [];
+                        const isSuperAdmin = user?.is_admin || user?.email === 'admin@example.com' || user?.email === 'admin@bpbd.id' || false;
                         
                         const visibleItems = group.items.filter(item => {
                             if (!item.permission) return true;
