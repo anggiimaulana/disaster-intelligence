@@ -102,6 +102,7 @@ Route::prefix('api')->group(function () {
 Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('notifications/mark-read', [DashboardController::class, 'markNotificationsRead'])->name('notifications.mark-read');
 
     // Incidents (Data Kejadian)
     Route::get('incidents', [KejadianController::class, 'index'])->name('incidents.index');

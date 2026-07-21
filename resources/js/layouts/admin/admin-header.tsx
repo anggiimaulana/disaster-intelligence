@@ -1,6 +1,6 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Calendar, ChevronDown, LogOut, Menu, Settings, User, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
+import { Bell, Calendar, ChevronDown, LogOut, Menu, Settings, User, CheckCircle, AlertTriangle, FileText, Check } from 'lucide-react';
 import { useRealTimeClock } from '@/hooks/use-real-time-clock';
 
 interface Notification {
@@ -89,7 +89,13 @@ export function AdminHeader({ sidebarOpen, onToggleSidebar }: AdminHeaderProps) 
 
                 {/* Notification Bell */}
                 <div className="relative" ref={notifRef}>
-                    <button onClick={() => setNotifOpen(!notifOpen)} className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Notifikasi">
+                    <button onClick={() => {
+                        const wasOpen = notifOpen;
+                        setNotifOpen(!notifOpen);
+                        if (!wasOpen && unreadCount > 0) {
+                            router.post('/cms/notifications/mark-read', {}, { preserveScroll: true });
+                        }
+                    }} className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Notifikasi">
                         <Bell className="h-5 w-5" />
                         {unreadCount > 0 && (
                             <span className="absolute -top-0.5 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
@@ -99,7 +105,11 @@ export function AdminHeader({ sidebarOpen, onToggleSidebar }: AdminHeaderProps) 
                         <div className="absolute right-0 top-full mt-1 w-80 rounded-xl border border-slate-200 bg-white shadow-lg z-50">
                             <div className="border-b border-slate-100 px-4 py-3 flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-slate-900">Notifikasi</h3>
-                                {unreadCount > 0 && <span className="text-xs text-blue-600 font-medium">{unreadCount} baru</span>}
+                                {unreadCount === 0 && notifications.length > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                                        <Check className="h-3 w-3" /> Semua dibaca
+                                    </span>
+                                )}
                             </div>
                             <div className="max-h-80 overflow-y-auto">
                                 {notifications.length === 0 ? (
@@ -108,10 +118,10 @@ export function AdminHeader({ sidebarOpen, onToggleSidebar }: AdminHeaderProps) 
                                     notifications.slice(0, 10).map((n) => {
                                         const Icon = NOTIF_ICONS[n.type] || FileText;
                                         return (
-                                            <Link key={n.id} href={n.url || '#'} onClick={() => setNotifOpen(false)} className={`flex gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`}>
+                                            <Link key={n.id} href={n.url || '#'} onClick={() => setNotifOpen(false)} className="flex gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
                                                 <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${NOTIF_COLORS[n.type] || 'text-slate-400'}`} />
                                                 <div className="min-w-0">
-                                                    <p className={`text-sm ${!n.read ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{n.title}</p>
+                                                    <p className="text-sm text-slate-700">{n.title}</p>
                                                     <p className="text-xs text-slate-500 truncate">{n.message}</p>
                                                     <p className="text-[10px] text-slate-400 mt-0.5">{new Date(n.created_at).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
                                                 </div>

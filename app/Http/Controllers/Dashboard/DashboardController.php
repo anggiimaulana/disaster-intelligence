@@ -9,12 +9,20 @@ use App\Models\LaporanBencana;
 use App\Models\SupportedRegency;
 use App\Models\Wilayah;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function markNotificationsRead(Request $request)
+    {
+        $request->session()->put('notifications_seen_at', now()->toIso8601String());
+
+        return back();
+    }
+
     public function index(): Response
     {
         // Real stats from database

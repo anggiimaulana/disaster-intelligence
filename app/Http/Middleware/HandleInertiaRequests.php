@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\AuditLog;
 use App\Models\Setting;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
@@ -49,15 +50,35 @@ class HandleInertiaRequests extends Middleware
             ];
         });
 
-        // Notifications from recent audit logs
+        // Notifications from recent audit logs (scoped per-user via session "last seen")
         $notifications = [];
         if ($request->user()) {
-            $recentLogs = AuditLog::orderBy('created_at', 'desc')->limit(10)->get();
+            $sessionKey = 'notifications_seen_at';
+            $seenAt = $request->session()->get($sessionKey);
+
+            $query = AuditLog::orderBy('created_at', 'desc')->limit(20);
+            if ($seenAt) {
+                $query->where('created_at', '>', Carbon::parse($seenAt));
+            }
+            $recentLogs = $query->get();
+
             $notifications = $recentLogs->map(function ($log) {
                 $type = match (true) {
                     str_contains($log->action, 'VALIDATE') => 'success',
                     str_contains($log->action, 'DELETE') => 'warning',
+                    str_contains($log->action, 'CREATE') || str_contains($log->action, 'STORE') => 'info',
                     default => 'info',
+                };
+
+                $url = match (true) {
+                    str_contains($log->action, 'VALIDATE_REPORT') && $log->table_name === 'laporan_bencana' => "/cms/validation/{$log->record_id}",
+                    str_contains($log->action, 'UPDATE_STATUS') && $log->table_name === 'laporan_bencana' => "/cms/incidents/{$log->record_id}",
+                    str_contains($log->action, 'CREATE_USER') || str_contains($log->action, 'DELETE_USER') => '/cms/roles',
+                    str_contains($log->action, 'ROLE') => '/cms/roles',
+                    $log->table_name === 'berita' => '/cms/berita',
+                    $log->table_name === 'kesiapsiagaan' => '/cms/kesiapsiagaan',
+                    $log->table_name === 'early_warnings' => '/cms/alerts',
+                    default => null,
                 };
 
                 return [
@@ -67,7 +88,7 @@ class HandleInertiaRequests extends Middleware
                     'type' => $type,
                     'read' => false,
                     'created_at' => $log->created_at->toIso8601String(),
-                    'url' => null,
+                    'url' => $url,
                 ];
             })->toArray();
         }
