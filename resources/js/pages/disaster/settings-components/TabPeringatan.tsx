@@ -1,7 +1,7 @@
 import { Bell, Map as MapIcon, TriangleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { config } from '@/config';
 
 const defaultRiskThresholds = [
@@ -18,10 +18,24 @@ const defaultNotifChannels = [
     { channel: 'Aplikasi (In-app)', rendah: true, sedang: true, tinggi: true, sangatTinggi: true },
 ];
 
+function parseSetting<T>(value: unknown, fallback: T): T {
+    if (value === null || value === undefined) return fallback;
+    if (Array.isArray(value) || typeof value === 'object') return value as T;
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value);
+            return parsed ?? fallback;
+        } catch {
+            return fallback;
+        }
+    }
+    return fallback;
+}
+
 export default function TabPeringatan({ appSettings }: any) {
-    const { data, setData, post, processing, transform } = useForm({
-        risk_thresholds: appSettings?.risk_thresholds ? JSON.parse(appSettings.risk_thresholds) : defaultRiskThresholds,
-        notif_channels: appSettings?.notif_channels ? JSON.parse(appSettings.notif_channels) : defaultNotifChannels,
+    const { data, setData, processing } = useForm({
+        risk_thresholds: parseSetting<any[]>(appSettings?.risk_thresholds, defaultRiskThresholds),
+        notif_channels: parseSetting<any[]>(appSettings?.notif_channels, defaultNotifChannels),
         map_default_zoom: appSettings?.map_default_zoom || '10',
         map_layer_risiko: appSettings?.map_layer_risiko === undefined ? true : (String(appSettings.map_layer_risiko) === '1' || appSettings.map_layer_risiko === true),
         map_cluster_marker: appSettings?.map_cluster_marker === undefined ? true : (String(appSettings.map_cluster_marker) === '1' || appSettings.map_cluster_marker === true),
@@ -29,14 +43,8 @@ export default function TabPeringatan({ appSettings }: any) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        transform((data: any) => ({
-            ...data,
-            risk_thresholds: JSON.stringify(data.risk_thresholds),
-            notif_channels: JSON.stringify(data.notif_channels)
-        }));
-        
-        post('/cms/settings/system', {
+
+        router.post('/cms/settings/system', data as any, {
             preserveScroll: true,
         });
     };

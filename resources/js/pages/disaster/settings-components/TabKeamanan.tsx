@@ -1,10 +1,24 @@
 import { KeyRound, ShieldAlert, Smartphone, Save } from 'lucide-react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
+
+function parseSetting<T>(value: unknown, fallback: T): T {
+    if (value === null || value === undefined) return fallback;
+    if (Array.isArray(value) || typeof value === 'object') return value as T;
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value);
+            return parsed ?? fallback;
+        } catch {
+            return fallback;
+        }
+    }
+    return fallback;
+}
 
 export default function TabKeamanan({ appSettings }: any) {
-    const { data, setData, post, processing, transform } = useForm({
+    const { data, setData, processing } = useForm({
         security_2fa_enabled: String(appSettings?.security_2fa_enabled) === '1' || appSettings?.security_2fa_enabled === true,
-        security_2fa_methods: appSettings?.security_2fa_methods ? JSON.parse(appSettings.security_2fa_methods) : ['authenticator', 'webauthn'],
+        security_2fa_methods: parseSetting<string[]>(appSettings?.security_2fa_methods, ['authenticator', 'webauthn']),
         password_min_length: appSettings?.password_min_length || '12',
         password_require_case: String(appSettings?.password_require_case) === '1' || appSettings?.password_require_case === true,
         password_require_numbers: String(appSettings?.password_require_numbers) === '1' || appSettings?.password_require_numbers === true,
@@ -24,13 +38,8 @@ export default function TabKeamanan({ appSettings }: any) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        transform((data: any) => ({
-            ...data,
-            security_2fa_methods: JSON.stringify(data.security_2fa_methods)
-        }));
-        
-        post('/cms/settings/system', {
+
+        router.post('/cms/settings/system', data as any, {
             preserveScroll: true,
         });
     };
