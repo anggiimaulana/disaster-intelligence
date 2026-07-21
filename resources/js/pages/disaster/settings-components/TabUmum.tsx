@@ -1,15 +1,15 @@
-import { Shield, Upload, X } from 'lucide-react';
-import { useForm } from '@inertiajs/react';
+import { Shield, Upload, X, Trash2 } from 'lucide-react';
+import { useForm, router } from '@inertiajs/react';
 import { useState, useRef } from 'react';
 
 export default function TabUmum({ appSettings }: any) {
     const [logoPreview, setLogoPreview] = useState(appSettings?.logo_url || '/icon.png');
     const [faviconPreview, setFaviconPreview] = useState(appSettings?.favicon_url || '/favicon.ico');
-    
+
     const logoInputRef = useRef<HTMLInputElement>(null);
     const faviconInputRef = useRef<HTMLInputElement>(null);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing } = useForm({
         app_name: appSettings?.app_name || 'Disaster Intelligence System',
         app_description: appSettings?.app_description || 'Sistem deteksi dini dan kesiapsiagaan bencana berbasis crowdsourced data dan AI.',
         app_instansi: appSettings?.app_instansi || 'BPBD Kabupaten Indramayu',
@@ -36,14 +36,37 @@ export default function TabUmum({ appSettings }: any) {
         }
     };
 
+    const handleRemoveLogo = () => {
+        if (!confirm('Hapus logo?')) return;
+        router.delete('/cms/settings/system/asset/logo_url', {
+            preserveScroll: true,
+            onSuccess: () => {
+                setLogoPreview('/icon.png');
+                if (logoInputRef.current) logoInputRef.current.value = '';
+                setData('logo_file', null);
+            },
+        });
+    };
+
+    const handleRemoveFavicon = () => {
+        if (!confirm('Hapus favicon?')) return;
+        router.delete('/cms/settings/system/asset/favicon_url', {
+            preserveScroll: true,
+            onSuccess: () => {
+                setFaviconPreview('/favicon.ico');
+                if (faviconInputRef.current) faviconInputRef.current.value = '';
+                setData('favicon_file', null);
+            },
+        });
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         post('/cms/settings/system', {
             preserveScroll: true,
             forceFormData: true,
             onSuccess: () => {
-                // Keep the preview URL but clear the file input so it doesn't upload again unless changed
                 setData('logo_file', null);
                 setData('favicon_file', null);
             }
@@ -109,19 +132,27 @@ export default function TabUmum({ appSettings }: any) {
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3">
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={() => logoInputRef.current?.click()}
                                             className="cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none transition-all"
                                         >
                                             Unggah Logo
                                         </button>
-                                        <input 
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveLogo}
+                                            className="cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-500 shadow-sm hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none transition-all inline-flex items-center gap-1.5"
+                                            title="Hapus logo"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" /> Hapus
+                                        </button>
+                                        <input
                                             ref={logoInputRef}
-                                            type="file" 
-                                            className="hidden" 
+                                            type="file"
+                                            className="hidden"
                                             onChange={handleLogoChange}
-                                            accept="image/png, image/jpeg, image/svg+xml" 
+                                            accept="image/png, image/jpeg, image/svg+xml"
                                         />
                                     </div>
                                     <p className="mt-2 text-xs text-slate-500">Ukuran direkomendasikan 512x512px.<br/>Format PNG, JPG atau SVG. Maks 2MB.</p>
@@ -140,19 +171,27 @@ export default function TabUmum({ appSettings }: any) {
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3">
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={() => faviconInputRef.current?.click()}
                                             className="cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none transition-all"
                                         >
                                             Ubah Favicon
                                         </button>
-                                        <input 
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveFavicon}
+                                            className="cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-500 shadow-sm hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none transition-all inline-flex items-center gap-1.5"
+                                            title="Hapus favicon"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" /> Hapus
+                                        </button>
+                                        <input
                                             ref={faviconInputRef}
-                                            type="file" 
-                                            className="hidden" 
+                                            type="file"
+                                            className="hidden"
                                             onChange={handleFaviconChange}
-                                            accept="image/x-icon, image/png, image/svg+xml" 
+                                            accept="image/x-icon, image/png, image/svg+xml"
                                         />
                                     </div>
                                     <p className="mt-2 text-xs text-slate-500">Ikon tab browser.<br/>Format .ico atau .png 32x32px.</p>

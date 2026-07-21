@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -19,8 +20,31 @@ class SettingsController extends Controller
         foreach ($data as $key => $value) {
             if ($request->hasFile($key)) {
                 $file = $request->file($key);
-                $path = $file->storeAs('public/settings', $file->hashName());
-                $value = '/storage/settings/'.$file->hashName();
+                $fileName = $file->hashName();
+                $path = $file->storeAs('public/settings', $fileName);
+
+                $storageKey = match ($key) {
+                    'logo_file' => 'logo_url',
+                    'favicon_file' => 'favicon_url',
+                    default => $key,
+                };
+
+                if ($storageKey !== $key) {
+                    $existing = Setting::where('key', $storageKey)->first();
+                    if ($existing?->value) {
+                        $relative = preg_replace('#^/storage/#', '', $existing->value);
+                        if ($relative && Storage::disk('public')->exists($relative)) {
+                            Storage::disk('public')->delete($relative);
+                        }
+                    }
+                }
+
+                Setting::updateOrCreate(
+                    ['key' => $storageKey],
+                    ['value' => '/storage/settings/'.$fileName]
+                );
+
+                continue;
             }
 
             Setting::updateOrCreate(
@@ -52,6 +76,24 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'Item berhasil dihapus.');
+    }
+
+    public function removeAsset(Request $request, string $key)
+    {
+        if (! in_array($key, ['logo_url', 'favicon_url'], true)) {
+            abort(404);
+        }
+
+        $setting = Setting::where('key', $key)->first();
+        if ($setting?->value) {
+            $relative = preg_replace('#^/storage/#', '', $setting->value);
+            if ($relative && Storage::disk('public')->exists($relative)) {
+                Storage::disk('public')->delete($relative);
+            }
+            $setting->delete();
+        }
+
+        return back()->with('success', ucfirst(str_replace('_url', '', $key)).' berhasil dihapus.');
     }
 
     public function testAiConnection(Request $request)

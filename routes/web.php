@@ -169,6 +169,7 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     Route::get('settings/system', [PengaturanController::class, 'index'])->name('settings.system');
     Route::post('settings/system', [SettingsController::class, 'update'])->name('settings.update');
     Route::delete('settings/system/array/{key}', [SettingsController::class, 'destroyArrayItem'])->name('settings.array.destroy');
+    Route::delete('settings/system/asset/{key}', [SettingsController::class, 'removeAsset'])->name('settings.asset.destroy');
 
     // Settings sub-pages
     Route::get('settings/env', [EnvController::class, 'edit'])->name('settings.env');
