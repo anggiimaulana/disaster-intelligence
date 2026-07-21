@@ -31,7 +31,7 @@ class MediaLibrary extends Model
 
     public function getUrlAttribute(): string
     {
-        return rtrim(config('app.url'), '/') . '/storage/' . $this->file_path;
+        return rtrim(config('app.url'), '/').'/storage/'.$this->file_path;
     }
 
     public function getIsImageAttribute(): bool

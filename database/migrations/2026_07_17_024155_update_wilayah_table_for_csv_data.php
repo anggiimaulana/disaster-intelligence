@@ -35,12 +35,12 @@ return new class extends Migration
     {
         Schema::table('wilayah', function (Blueprint $table) {
             $table->dropIndex(['kabupaten', 'kecamatan', 'desa']);
-            $table->dropIndex('kecamatan');
-            $table->dropIndex('kabupaten');
-            $table->dropIndex('kode_desa');
-            $table->dropIndex('kode_kecamatan');
-            $table->dropIndex('kode_kabupaten');
-            $table->dropIndex('kode_provinsi');
+            $table->dropIndex(['kecamatan']);
+            $table->dropIndex(['kabupaten']);
+            $table->dropIndex(['kode_desa']);
+            $table->dropIndex(['kode_kecamatan']);
+            $table->dropIndex(['kode_kabupaten']);
+            $table->dropIndex(['kode_provinsi']);
 
             $table->dropColumn([
                 'kode_provinsi',

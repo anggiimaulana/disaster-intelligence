@@ -138,7 +138,7 @@ export default function Validation() {
                     only: ['laporan'],
                     onSuccess: (page) => {
                         const updatedLaporan = (page.props as any).laporan;
-                        const updatedReport = updatedLaporan.data.find((r) => r.id === selectedId);
+                        const updatedReport = updatedLaporan.data.find((r: any) => r.id === selectedId);
                         if (updatedReport) {
                             setSelectedReport(updatedReport);
                         }
@@ -175,7 +175,7 @@ export default function Validation() {
                     only: ['laporan'],
                     onSuccess: (page) => {
                         const updatedLaporan = (page.props as any).laporan;
-                        const updatedReport = updatedLaporan.data.find((r) => r.id === selectedId);
+                        const updatedReport = updatedLaporan.data.find((r: any) => r.id === selectedId);
                         if (updatedReport) {
                             setSelectedReport(updatedReport);
                         }

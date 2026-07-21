@@ -363,6 +363,8 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
                 setData('latitude', lat.toFixed(6));
                 setData('longitude', lng.toFixed(6));
                 setMapKey(prev => prev + 1);
+            } else {
+                setNotification({ type: 'warning', message: 'Koordinat tidak tersedia untuk wilayah ini. Klik peta untuk menandai lokasi.' });
             }
         } catch (error) {
             console.warn('Fetch coordinates error:', error);

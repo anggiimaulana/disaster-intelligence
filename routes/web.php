@@ -33,7 +33,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Public Reporting System (No login required)
 Route::prefix('public')->group(function () {
     Route::get('peta-bencana', [DisasterMapController::class, 'index'])->name('public.disaster-map');
-    Route::get('lapor-bencana', [PengaduanController::class, 'index'])->name('public.report');
+    Route::get('lapor-bencana', [PengaduanController::class, 'index'])->name('lapor-bencana');
     Route::post('lapor-bencana', [PengaduanController::class, 'store'])
         ->middleware('throttle:30,60') // 30 requests per minute per IP
         ->name('public.report.store');
@@ -97,8 +97,6 @@ Route::prefix('api')->group(function () {
         ->name('api.coordinates-by-location');
 });
 
-// Legacy route — redirect to new URL
-Route::get('/public/lapor-bencana', fn () => redirect('/public/lapor', 301))->name('lapor-bencana');
 
 Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     // Dashboard
