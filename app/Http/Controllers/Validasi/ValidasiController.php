@@ -115,28 +115,22 @@ class ValidasiController extends Controller
     }
 
     /**
-     * Validate a report (API)
+     * Validate a report (Inertia-compatible)
      * Rate limited: 30 validations per minute per admin
      */
-    public function validate(ValidasiStoreRequest $request, string $id): JsonResponse
+    public function validate(ValidasiStoreRequest $request, string $id)
     {
         // Rate limiting
         $key = 'validasi:'.auth()->id();
         if (RateLimiter::tooManyAttempts($key, 30)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terlalu banyak validasi. Silakan tunggu sebentar.',
-            ], 429);
+            return back()->withErrors(['rate' => 'Terlalu banyak validasi. Silakan tunggu sebentar.']);
         }
         RateLimiter::hit($key, 60);
 
         $laporan = LaporanBencana::findOrFail($id);
 
         if ($laporan->validasi_admin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Laporan ini sudah divalidasi sebelumnya.',
-            ], 422);
+            return back()->withErrors(['state' => 'Laporan ini sudah divalidasi sebelumnya.']);
         }
 
         try {
@@ -144,7 +138,6 @@ class ValidasiController extends Controller
 
             $validated = $request->validated();
 
-            // Create validation record
             $validasi = ValidasiLaporan::create([
                 'laporan_id' => $laporan->id,
                 'admin_id' => auth()->id(),
@@ -152,10 +145,9 @@ class ValidasiController extends Controller
                 'catatan' => $validated['catatan'] ?? null,
             ]);
 
-            // Update laporan status based on validation result
             $newStatusId = match ($validated['hasil_validasi']) {
-                'valid' => 2, // Diproses
-                'invalid', 'spam', 'duplikat' => 6, // Ditolak
+                'valid' => 2,
+                'invalid', 'spam', 'duplikat' => 6,
                 default => 1,
             };
 
@@ -164,7 +156,6 @@ class ValidasiController extends Controller
                 'status_id' => $newStatusId,
             ]);
 
-            // Log the action
             AuditLog::create([
                 'user_id' => auth()->id(),
                 'action' => 'VALIDATE_REPORT',
@@ -180,14 +171,12 @@ class ValidasiController extends Controller
 
             DB::commit();
 
-            // Fire real-time events
             $laporan->refresh();
             $laporan->load(['jenisBencana:id,kode,nama_bencana,warna', 'status:id,nama_status,warna']);
 
             LaporanValidated::dispatch($laporan, $validasi);
             LaporanStatusUpdated::dispatch($laporan);
 
-            // Send webhook to n8n if report is valid
             if ($validated['hasil_validasi'] === 'valid') {
                 SendN8nWebhook::dispatch('report_validated', [
                     'laporan_id' => $laporan->id,
@@ -199,7 +188,6 @@ class ValidasiController extends Controller
                 ]);
             }
 
-            // Clear cache
             Cache::forget('laporan_statistics');
 
             Log::info('Report validated', [
@@ -209,22 +197,7 @@ class ValidasiController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Validasi berhasil disimpan.',
-                'data' => [
-                    'laporan_id' => $laporan->id,
-                    'kode_laporan' => $laporan->kode_laporan,
-                    'validasi' => [
-                        'hasil' => $validasi->hasil_validasi,
-                        'catatan' => $validasi->catatan,
-                    ],
-                    'status' => [
-                        'id' => $laporan->status->id,
-                        'nama' => $laporan->status->nama_status,
-                    ],
-                ],
-            ]);
+            return back()->with('success', 'Validasi berhasil disimpan.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -234,10 +207,7 @@ class ValidasiController extends Controller
                 'admin_id' => auth()->id(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan validasi.',
-            ], 500);
+            return back()->withErrors(['general' => 'Terjadi kesalahan saat menyimpan validasi.']);
         }
     }
 

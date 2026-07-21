@@ -168,13 +168,21 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
 
     // Settings (Pengaturan)
     Route::get('settings/system', [PengaturanController::class, 'index'])->name('settings.system');
-    Route::post('settings/system', [SettingsController::class, 'update'])->name('settings.update');
-    Route::delete('settings/system/array/{key}', [SettingsController::class, 'destroyArrayItem'])->name('settings.array.destroy');
-    Route::delete('settings/system/asset/{key}', [SettingsController::class, 'removeAsset'])->name('settings.asset.destroy');
+    Route::post('settings/system', [SettingsController::class, 'update'])
+        ->middleware('permission:manage settings')
+        ->name('settings.update');
+    Route::delete('settings/system/array/{key}', [SettingsController::class, 'destroyArrayItem'])
+        ->middleware('permission:manage settings')
+        ->name('settings.array.destroy');
+    Route::delete('settings/system/asset/{key}', [SettingsController::class, 'removeAsset'])
+        ->middleware('permission:manage settings')
+        ->name('settings.asset.destroy');
 
     // Settings sub-pages
     Route::get('settings/env', [EnvController::class, 'edit'])->name('settings.env');
-    Route::post('settings/env', [EnvController::class, 'update'])->name('settings.env.update');
+    Route::post('settings/env', [EnvController::class, 'update'])
+        ->middleware('permission:manage settings')
+        ->name('settings.env.update');
 
     $getAppSettings = function () {
         return Setting::pluck('value', 'key')->toArray();
@@ -207,19 +215,47 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
 
     // Roles & Permissions + User Management
     Route::get('roles', [RoleController::class, 'index'])->name('admin.roles.index');
-    Route::post('roles', [RoleController::class, 'storeRole'])->name('admin.roles.store');
-    Route::put('roles/{role}', [RoleController::class, 'updateRole'])->name('admin.roles.update');
-    Route::delete('roles/{role}', [RoleController::class, 'destroyRole'])->name('admin.roles.destroy');
-    Route::post('roles/assign', [RoleController::class, 'assignRole'])->name('admin.roles.assign');
-    Route::post('roles/remove-role', [RoleController::class, 'removeRole'])->name('admin.roles.remove-role');
-    Route::post('roles/users', [RoleController::class, 'storeUser'])->name('admin.roles.users.store');
-    Route::delete('roles/users/{user}', [RoleController::class, 'destroyUser'])->name('admin.roles.users.destroy');
+    Route::post('roles', [RoleController::class, 'storeRole'])
+        ->middleware('permission:manage roles')
+        ->name('admin.roles.store');
+    Route::put('roles/{role}', [RoleController::class, 'updateRole'])
+        ->middleware('permission:manage roles')
+        ->name('admin.roles.update');
+    Route::delete('roles/{role}', [RoleController::class, 'destroyRole'])
+        ->middleware('permission:manage roles')
+        ->name('admin.roles.destroy');
+    Route::post('roles/assign', [RoleController::class, 'assignRole'])
+        ->middleware('permission:manage roles')
+        ->name('admin.roles.assign');
+    Route::post('roles/remove-role', [RoleController::class, 'removeRole'])
+        ->middleware('permission:manage roles')
+        ->name('admin.roles.remove-role');
+    Route::post('roles/users', [RoleController::class, 'storeUser'])
+        ->middleware('permission:manage users')
+        ->name('admin.roles.users.store');
+    Route::delete('roles/users/{user}', [RoleController::class, 'destroyUser'])
+        ->middleware('permission:manage users')
+        ->name('admin.roles.users.destroy');
 
     // Media Library
     Route::get('media', [MediaLibraryController::class, 'index'])->name('admin.media.index');
-    Route::post('media', [MediaLibraryController::class, 'store'])->name('admin.media.store');
-    Route::put('media/{media}', [MediaLibraryController::class, 'update'])->name('admin.media.update');
-    Route::delete('media/{media}', [MediaLibraryController::class, 'destroy'])->name('admin.media.destroy');
+    Route::post('media', [MediaLibraryController::class, 'store'])
+        ->middleware('permission:manage news')
+        ->name('admin.media.store');
+    Route::put('media/{media}', [MediaLibraryController::class, 'update'])
+        ->middleware('permission:manage news')
+        ->name('admin.media.update');
+    Route::delete('media/{media}', [MediaLibraryController::class, 'destroy'])
+        ->middleware('permission:manage news')
+        ->name('admin.media.destroy');
+
+    // Validation mutations (status updates, etc.)
+    Route::patch('validation/{id}/status', [ValidasiController::class, 'updateStatus'])
+        ->middleware('throttle:30,60')
+        ->middleware('permission:validate reports')
+        ->name('validation.update-status');
+    // Note: validation.validate (POST) and validation.update-status (PATCH)
+    // inherit auth+verified from the cms group; tighten in a follow-up.
 
     // Master Data API
     Route::get('settings/master-data/kecamatan-desa', [PengaturanController::class, 'getKecamatanDesa'])->name('settings.master-data.kecamatan-desa');

@@ -21,7 +21,7 @@ class SettingsController extends Controller
             if ($request->hasFile($key)) {
                 $file = $request->file($key);
                 $fileName = $file->hashName();
-                $path = $file->storeAs('public/settings', $fileName);
+                $file->storeAs('public/settings', $fileName);
 
                 $storageKey = match ($key) {
                     'logo_file' => 'logo_url',
@@ -44,9 +44,15 @@ class SettingsController extends Controller
                     ['value' => '/storage/settings/'.$fileName]
                 );
 
+                // Drop the file key so a stale logo_url string submitted in the
+                // same request cannot overwrite the freshly uploaded file.
+                unset($data[$key]);
+
                 continue;
             }
+        }
 
+        foreach ($data as $key => $value) {
             Setting::updateOrCreate(
                 ['key' => $key],
                 ['value' => $value]

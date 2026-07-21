@@ -100,7 +100,7 @@ class HomeController extends Controller
                     'category' => 'news',
                     'title' => $b->title,
                     'excerpt' => $excerpt,
-                    'imageUrl' => $b->thumbnail ? Storage::url($b->thumbnail) : 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
+                    'imageUrl' => $b->thumbnail ? Storage::disk('public')->url($b->thumbnail) : 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?w=600&q=80',
                     'publishedAt' => $b->published_at?->toISOString() ?? $b->created_at->toISOString(),
                     'content' => $b->content,
                 ];

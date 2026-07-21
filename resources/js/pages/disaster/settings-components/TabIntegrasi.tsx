@@ -1,6 +1,6 @@
 import { Brain, Mail, MessageCircle, Send, Workflow, Plus, Trash2, Save, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
 
 const integrationsList = [
@@ -43,13 +43,48 @@ export default function TabIntegrasi({ appSettings = {} }: { appSettings?: Recor
     const [saving, setSaving] = useState(false);
     const [configTarget, setConfigTarget] = useState<(typeof integrations)[number] | null>(null);
     const [configDraft, setConfigDraft] = useState({ enabled: false, configUrl: '' });
+    const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
+
+    const toggleTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+    const postSetting = (patch: Record<string, unknown>, options: { onSuccess?: () => void; onError?: () => void; onFinish?: () => void } = {}) => {
+        router.post('/cms/settings/system', patch as any, {
+            preserveScroll: true,
+            onSuccess: options.onSuccess,
+            onError: options.onError,
+            onFinish: options.onFinish,
+        });
+    };
+
+    const persistToggle = (id: string, nextEnabled: boolean) => {
+        if (toggleTimers.current[id]) {
+            clearTimeout(toggleTimers.current[id]);
+        }
+        toggleTimers.current[id] = setTimeout(() => {
+            setPendingToggleId(id);
+            const previous = integrations.find((i) => i.id === id)?.enabled ?? false;
+            postSetting(
+                { [settingKey(id)]: nextEnabled ? 'true' : 'false' },
+                {
+                    onError: () => {
+                        // Rollback optimistic update on failure
+                        setIntegrations((prev) => prev.map((intg) => intg.id === id ? { ...intg, enabled: previous } : intg));
+                    },
+                    onFinish: () => {
+                        setPendingToggleId(null);
+                        delete toggleTimers.current[id];
+                    },
+                },
+            );
+        }, 250);
+    };
 
     const toggleStatus = (id: string) => {
         const target = integrations.find((i) => i.id === id);
         if (!target) return;
         const nextEnabled = !target.enabled;
         setIntegrations(integrations.map((intg) => (intg.id === id ? { ...intg, enabled: nextEnabled } : intg)));
-        router.post('/cms/settings/system', { [settingKey(id)]: nextEnabled ? 'true' : 'false' } as any, { preserveScroll: true });
+        persistToggle(id, nextEnabled);
     };
 
     const openConfig = (intg: (typeof integrations)[number]) => {
@@ -64,8 +99,7 @@ export default function TabIntegrasi({ appSettings = {} }: { appSettings?: Recor
             [settingKey(id)]: configDraft.enabled ? 'true' : 'false',
             [configKey(id)]: configDraft.configUrl,
         };
-        router.post('/cms/settings/system', payload as any, {
-            preserveScroll: true,
+        postSetting(payload, {
             onSuccess: () => {
                 setIntegrations((prev) => prev.map((intg) => intg.id === id ? { ...intg, enabled: configDraft.enabled, configUrl: configDraft.configUrl } : intg));
                 setConfigTarget(null);
@@ -138,8 +172,8 @@ export default function TabIntegrasi({ appSettings = {} }: { appSettings?: Recor
                                     </button>
 
                                     <label className="relative inline-flex cursor-pointer items-center">
-                                        <input type="checkbox" className="peer sr-only" checked={intg.enabled} onChange={() => toggleStatus(intg.id)} />
-                                        <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"></div>
+                                        <input type="checkbox" className="peer sr-only" checked={intg.enabled} disabled={pendingToggleId === intg.id} onChange={() => toggleStatus(intg.id)} />
+                                        <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60"></div>
                                     </label>
                                 </div>
                             </div>
