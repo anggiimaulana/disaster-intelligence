@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Wilayah;
+use Illuminate\Support\Facades\Http;
 
 class WilayahController extends Controller
 {
@@ -35,7 +36,7 @@ class WilayahController extends Controller
         } else {
             $apiUrl = config('services.wilayah_api.url');
             if ($apiUrl && ctype_digit($regency)) {
-                $response = \Illuminate\Support\Facades\Http::get("{$apiUrl}/districts/{$regency}.json");
+                $response = Http::get("{$apiUrl}/districts/{$regency}.json");
                 if ($response->successful()) {
                     $districts = collect($response->json())->map(fn ($d) => [
                         'code' => $d['id'],
@@ -85,7 +86,7 @@ class WilayahController extends Controller
         } else {
             $apiUrl = config('services.wilayah_api.url');
             if ($apiUrl && ctype_digit($district)) {
-                $response = \Illuminate\Support\Facades\Http::get("{$apiUrl}/villages/{$district}.json");
+                $response = Http::get("{$apiUrl}/villages/{$district}.json");
                 if ($response->successful()) {
                     $villages = collect($response->json())->map(fn ($v) => [
                         'code' => $v['id'],

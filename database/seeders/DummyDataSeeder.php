@@ -8,6 +8,7 @@ use App\Models\Faq;
 use App\Models\JenisBencana;
 use App\Models\Kesiapsiagaan;
 use App\Models\LaporanBencana;
+use App\Models\Setting;
 use App\Models\StatusLaporan;
 use App\Models\Wilayah;
 use Faker\Factory as Faker;
@@ -371,7 +372,7 @@ class DummyDataSeeder extends Seeder
         ];
 
         foreach ($settings as $key => $value) {
-            \App\Models\Setting::updateOrCreate(
+            Setting::updateOrCreate(
                 ['key' => $key],
                 ['value' => $value],
             );

@@ -97,7 +97,6 @@ Route::prefix('api')->group(function () {
         ->name('api.coordinates-by-location');
 });
 
-
 Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

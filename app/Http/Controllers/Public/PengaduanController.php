@@ -471,7 +471,7 @@ class PengaduanController extends Controller
             if (empty($results)) {
                 $apiUrl = config('services.wilayah_api.url');
                 if ($apiUrl && ctype_digit($kecamatan)) {
-                    $response = \Illuminate\Support\Facades\Http::get("{$apiUrl}/villages/{$kecamatan}.json");
+                    $response = Http::get("{$apiUrl}/villages/{$kecamatan}.json");
                     if ($response->successful()) {
                         return collect($response->json())->map(fn ($d) => [
                             'code' => $d['id'],
@@ -752,7 +752,7 @@ class PengaduanController extends Controller
             if (empty($results)) {
                 $apiUrl = config('services.wilayah_api.url');
                 if ($apiUrl && $isCode) {
-                    $response = \Illuminate\Support\Facades\Http::get("{$apiUrl}/districts/{$kabupaten}.json");
+                    $response = Http::get("{$apiUrl}/districts/{$kabupaten}.json");
                     if ($response->successful()) {
                         return collect($response->json())->map(fn ($d) => [
                             'code' => $d['id'],

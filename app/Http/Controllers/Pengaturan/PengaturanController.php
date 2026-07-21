@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Pengaturan;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\JenisBencana;
 use App\Models\Setting;
 use App\Models\StatusLaporan;
 use App\Models\SupportedRegency;
 use App\Models\Wilayah;
-use App\Models\AuditLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -159,7 +159,7 @@ class PengaturanController extends Controller
             ->withQueryString();
 
         return Inertia::render('settings/tabs/log', [
-            'logs' => $logs
+            'logs' => $logs,
         ]);
     }
 }

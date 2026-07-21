@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SupportedRegency;
+use App\Models\Wilayah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -55,9 +56,43 @@ class RegencyController extends Controller
         $regencies = SupportedRegency::orderBy('code')->get();
         $this->clearRegencyCache();
 
+        $activeRegencyNames = $regencies
+            ->where('is_active', true)
+            ->pluck('name')
+            ->map(fn ($name) => preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $name))
+            ->map(fn ($name) => ucwords(strtolower(trim($name))))
+            ->toArray();
+
+        $wilayahData = Wilayah::whereIn('kabupaten', $activeRegencyNames)
+            ->select('kabupaten', 'kecamatan', 'desa', 'latitude', 'longitude')
+            ->orderBy('kabupaten')
+            ->orderBy('kecamatan')
+            ->orderBy('desa')
+            ->get()
+            ->groupBy('kabupaten')
+            ->map(function ($items, $kabupaten) {
+                return [
+                    'kabupaten' => $kabupaten,
+                    'kecamatan' => $items->groupBy('kecamatan')->map(function ($desaItems, $kecamatan) {
+                        return [
+                            'kecamatan' => $kecamatan,
+                            'desa' => $desaItems->unique('desa')->values()->map(function ($item) {
+                                return [
+                                    'desa' => $item->desa,
+                                    'latitude' => $item->latitude,
+                                    'longitude' => $item->longitude,
+                                ];
+                            }),
+                        ];
+                    })->values(),
+                ];
+            })
+            ->values();
+
         return Inertia::render('disaster/regencies', [
             'title' => 'Pengaturan Wilayah — Jawa Barat',
             'supportedRegencies' => $regencies,
+            'wilayahData' => $wilayahData,
         ]);
     }
 
