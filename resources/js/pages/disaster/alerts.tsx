@@ -92,15 +92,15 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                             <Plus className="h-4 w-4" /> Buat Peringatan Dini
                         </button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px] p-6">
+                    <DialogContent className="sm:max-w-[800px] p-6">
                         <DialogHeader>
                             <DialogTitle>{editingId ? 'Edit Peringatan Dini' : 'Buat Peringatan Dini Baru'}</DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={submit} className="grid gap-6 py-4">
+                        <form onSubmit={submit} className="grid gap-4 py-4 sm:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="jenis_bencana_id">Jenis Bencana</Label>
-                                <Select 
-                                    value={data.jenis_bencana_id} 
+                                <Select
+                                    value={data.jenis_bencana_id}
                                     onValueChange={v => setData('jenis_bencana_id', v)}
                                 >
                                     <SelectTrigger id="jenis_bencana_id" className="w-full">
@@ -116,8 +116,8 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="level_warning">Level Peringatan</Label>
-                                <Select 
-                                    value={data.level_warning} 
+                                <Select
+                                    value={data.level_warning}
                                     onValueChange={v => setData('level_warning', v)}
                                 >
                                     <SelectTrigger id="level_warning" className="w-full">
@@ -131,10 +131,10 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                                 </Select>
                                 {errors.level_warning && <p className="text-red-500 text-xs">{errors.level_warning}</p>}
                             </div>
-                            <div className="grid gap-2">
+                            <div className="grid gap-2 sm:col-span-2">
                                 <Label htmlFor="wilayah">Wilayah</Label>
-                                <Select 
-                                    value={data.wilayah} 
+                                <Select
+                                    value={data.wilayah}
                                     onValueChange={v => setData('wilayah', v)}
                                 >
                                     <SelectTrigger id="wilayah" className="w-full">
@@ -148,17 +148,17 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                                 </Select>
                                 {errors.wilayah && <p className="text-red-500 text-xs">{errors.wilayah}</p>}
                             </div>
-                            <div className="grid gap-2">
+                            <div className="grid gap-2 sm:col-span-2">
                                 <Label htmlFor="pesan">Detail Peringatan</Label>
-                                <RichTextEditor 
-                                    value={data.pesan} 
+                                <RichTextEditor
+                                    value={data.pesan}
                                     onChange={val => setData('pesan', val)}
                                     placeholder="Masukkan detail peringatan yang lengkap..."
                                     minHeight="200px"
                                 />
                                 {errors.pesan && <p className="text-red-500 text-xs">{errors.pesan}</p>}
                             </div>
-                            <div className="flex justify-end gap-3 pt-4">
+                            <div className="flex justify-end gap-3 pt-4 sm:col-span-2">
                                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                                     Batal
                                 </Button>
@@ -362,17 +362,17 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                 <h3 className="mb-4 text-sm font-bold text-slate-900">PENGATURAN CEPAT PERINGATAN</h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                     {[
-                        { title: 'Ambang Batas Risiko', desc: 'Atur threshold untuk memicu peringatan otomatis', action: 'Atur' },
-                        { title: 'Template Pesan', desc: 'Kelola template pesan untuk berbagai jenis bencana', action: 'Kelola' },
-                        { title: 'Saluran Notifikasi', desc: 'Kelola saluran dan gateway notifikasi yang aktif', action: 'Kelola' },
-                        { title: 'Jadwal & Eskalasi', desc: 'Atur jadwal pemantauan dan eskalasi peringatan', action: 'Atur' },
-                        { title: 'Laporan & Evaluasi', desc: 'Lihat laporan efektivitas peringatan dini', action: 'Lihat' },
+                        { title: 'Ambang Batas Risiko', desc: 'Atur threshold untuk memicu peringatan otomatis', action: 'Atur', href: '/cms/settings/system?tab=peringatan' },
+                        { title: 'Template Pesan', desc: 'Kelola template pesan untuk berbagai jenis bencana', action: 'Kelola', href: '/cms/settings/system?tab=peringatan' },
+                        { title: 'Saluran Notifikasi', desc: 'Kelola saluran dan gateway notifikasi yang aktif', action: 'Kelola', href: '/cms/settings/system?tab=integrasi' },
+                        { title: 'Jadwal & Eskalasi', desc: 'Atur jadwal pemantauan dan eskalasi peringatan', action: 'Atur', href: '/cms/settings/system?tab=peringatan' },
+                        { title: 'Laporan & Evaluasi', desc: 'Lihat laporan efektivitas peringatan dini', action: 'Lihat', href: '/cms/settings/log' },
                     ].map((item) => (
                         <div key={item.title} className="rounded-lg border border-slate-100 p-4">
                             <Settings className="h-5 w-5 text-slate-400" />
                             <p className="mt-2 text-sm font-bold text-slate-900">{item.title}</p>
                             <p className="mt-1 text-xs text-slate-500">{item.desc}</p>
-                            <button className="mt-2 text-sm font-medium text-blue-600 hover:underline cursor-pointer">{item.action}</button>
+                            <a href={item.href} className="mt-2 inline-block text-sm font-medium text-blue-600 hover:underline">{item.action} →</a>
                         </div>
                     ))}
                 </div>
