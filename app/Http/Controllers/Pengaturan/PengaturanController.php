@@ -8,7 +8,9 @@ use App\Models\Setting;
 use App\Models\StatusLaporan;
 use App\Models\SupportedRegency;
 use App\Models\Wilayah;
+use App\Models\AuditLog;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -147,5 +149,17 @@ class PengaturanController extends Controller
             ->get();
 
         return response()->json(['success' => true, 'data' => $wilayah]);
+    }
+
+    public function log(Request $request): Response
+    {
+        $logs = AuditLog::with('user:id,name,email')
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return Inertia::render('settings/tabs/log', [
+            'logs' => $logs
+        ]);
     }
 }

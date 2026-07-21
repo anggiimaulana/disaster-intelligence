@@ -77,6 +77,7 @@ const navGroups: NavGroup[] = [
                     { label: 'Keamanan', href: '/cms/settings/keamanan' },
                     { label: 'Environment (.env)', href: '/cms/settings/env' },
                     { label: 'Role & Hak Akses', href: '/cms/roles' },
+                    { label: 'Log Aktivitas', href: '/cms/settings/log' },
                 ],
             },
         ],

@@ -183,7 +183,7 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     Route::get('settings/pengguna', fn () => Inertia::render('settings/tabs/pengguna', ['appSettings' => $getAppSettings()]))->name('settings.pengguna');
     Route::get('settings/keamanan', fn () => Inertia::render('settings/tabs/keamanan', ['appSettings' => $getAppSettings()]))->name('settings.keamanan');
     Route::get('settings/backup', fn () => Inertia::render('settings/tabs/backup'))->name('settings.backup');
-    Route::get('settings/log', fn () => Inertia::render('settings/tabs/log'))->name('settings.log');
+    Route::get('settings/log', [PengaturanController::class, 'log'])->name('settings.log');
 
     // Roles & Permissions + User Management
     Route::get('roles', [RoleController::class, 'index'])->name('admin.roles.index');
