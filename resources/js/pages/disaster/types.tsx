@@ -8,8 +8,11 @@ import {
     Trash2,
     X,
     Check,
+    ImageIcon,
+    Upload,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { MediaLibraryPicker } from '@/components/ui/media-library-picker';
 
 const allIconKeys = [
     'Flame', 'Waves', 'Wind', 'CloudLightning', 'Mountain', 'Droplets', 
@@ -54,6 +57,9 @@ export default function DisasterTypes({ title, disasterTypes }: PageProps) {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [iconSearch, setIconSearch] = useState('');
+    const [showMediaPicker, setShowMediaPicker] = useState(false);
+
+    const isMediaIcon = (value: string) => /^https?:\/\//.test(value) || value.startsWith('/storage/') || value.startsWith('media/');
 
     const filteredIcons = allIconKeys
         .filter(k => k.toLowerCase().includes(iconSearch.toLowerCase()))
@@ -87,6 +93,11 @@ export default function DisasterTypes({ title, disasterTypes }: PageProps) {
         setWarna('#EF4444');
         setError('');
         setIconSearch('');
+    };
+
+    const handleMediaSelect = (media: { file_path: string; file_url: string }) => {
+        setIcon(media.file_url);
+        setShowMediaPicker(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -175,48 +186,77 @@ export default function DisasterTypes({ title, disasterTypes }: PageProps) {
 
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Icon</label>
-                                <div className="mb-3">
+
+                                {isMediaIcon(icon) && (
+                                    <div className="mb-3 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                        <img src={icon} alt="Custom icon preview" className="h-10 w-10 rounded object-contain" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-semibold text-slate-700">Custom icon dari Media Library</p>
+                                            <p className="truncate text-xs text-slate-500">{icon}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIcon('')}
+                                            className="text-xs text-red-600 hover:underline"
+                                        >
+                                            Hapus
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="mb-3 flex items-center gap-2">
                                     <input
                                         type="text"
                                         placeholder="Cari icon (ex: Flame, Droplets)..."
                                         value={iconSearch}
                                         onChange={(e) => setIconSearch(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                        className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                                     />
-                                </div>
-                                <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-[160px] overflow-y-auto p-1">
                                     <button
                                         type="button"
-                                        onClick={() => setIcon('')}
-                                        className={cn(
-                                            'flex h-10 w-10 flex-col items-center justify-center rounded-lg border-2 transition-all',
-                                            icon === '' ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200 hover:bg-slate-50'
-                                        )}
-                                        title="Tanpa Icon (Default)"
+                                        onClick={() => setShowMediaPicker(true)}
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                                     >
-                                        <AlertTriangle className="h-5 w-5" />
+                                        <Upload className="h-4 w-4" /> Upload
                                     </button>
-                                    {filteredIcons.filter(k => k !== 'AlertTriangle').map((iconKey) => {
-                                        const IconComp = (LucideIcons as any)[iconKey];
-                                        if (!IconComp || typeof IconComp !== 'object' && typeof IconComp !== 'function') return null;
-                                        return (
-                                            <button
-                                                key={iconKey}
-                                                type="button"
-                                                onClick={() => setIcon(iconKey)}
-                                                className={cn(
-                                                    'flex h-10 w-10 flex-col items-center justify-center rounded-lg border-2 transition-all',
-                                                    icon === iconKey ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50'
-                                                )}
-                                                title={iconKey}
-                                            >
-                                                <IconComp className="h-5 w-5" />
-                                            </button>
-                                        );
-                                    })}
                                 </div>
+
+                                {!isMediaIcon(icon) && (
+                                    <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-[160px] overflow-y-auto p-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIcon('')}
+                                            className={cn(
+                                                'flex h-10 w-10 flex-col items-center justify-center rounded-lg border-2 transition-all',
+                                                icon === '' ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200 hover:bg-slate-50'
+                                            )}
+                                            title="Tanpa Icon (Default)"
+                                        >
+                                            <AlertTriangle className="h-5 w-5" />
+                                        </button>
+                                        {filteredIcons.filter(k => k !== 'AlertTriangle').map((iconKey) => {
+                                            const IconComp = (LucideIcons as any)[iconKey];
+                                            if (!IconComp || typeof IconComp !== 'object' && typeof IconComp !== 'function') return null;
+                                            return (
+                                                <button
+                                                    key={iconKey}
+                                                    type="button"
+                                                    onClick={() => setIcon(iconKey)}
+                                                    className={cn(
+                                                        'flex h-10 w-10 flex-col items-center justify-center rounded-lg border-2 transition-all',
+                                                        icon === iconKey ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50'
+                                                    )}
+                                                    title={iconKey}
+                                                >
+                                                    <IconComp className="h-5 w-5" />
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
                                 <div className="mt-2 text-xs text-slate-500">
-                                    Icon terpilih: <span className="font-semibold text-slate-700">{icon || 'Default (AlertTriangle)'}</span>
+                                    Icon terpilih: <span className="font-semibold text-slate-700">{isMediaIcon(icon) ? 'Custom (media library)' : (icon || 'Default (AlertTriangle)')}</span>
                                 </div>
                             </div>
 
@@ -312,7 +352,12 @@ export default function DisasterTypes({ title, disasterTypes }: PageProps) {
                                         </td>
                                         <td className="px-5 py-3 font-medium text-slate-900">{item.nama_bencana}</td>
                                         <td className="px-5 py-3 text-slate-600">
-                                            {item.icon && (LucideIcons as any)[item.icon] ? (
+                                            {item.icon && /^https?:\/\//.test(item.icon) || (item.icon && item.icon.startsWith('/storage/')) ? (
+                                                <div className="flex items-center gap-2">
+                                                    <img src={item.icon} alt={item.nama_bencana} className="h-6 w-6 object-contain" />
+                                                    <ImageIcon className="h-3.5 w-3.5 text-blue-500" />
+                                                </div>
+                                            ) : item.icon && (LucideIcons as any)[item.icon] ? (
                                                 <div className="flex items-center gap-2">
                                                     {(() => {
                                                         const IconComponent = (LucideIcons as any)[item.icon];
@@ -321,7 +366,7 @@ export default function DisasterTypes({ title, disasterTypes }: PageProps) {
                                                     <span>{item.icon}</span>
                                                 </div>
                                             ) : (
-                                                '-'
+                                                <span className="text-slate-400">-</span>
                                             )}
                                         </td>
                                         <td className="px-5 py-3">
@@ -373,6 +418,13 @@ export default function DisasterTypes({ title, disasterTypes }: PageProps) {
                     </div>
                 </div>
             )}
+
+            <MediaLibraryPicker
+                open={showMediaPicker}
+                onClose={() => setShowMediaPicker(false)}
+                onSelect={handleMediaSelect}
+                accept="image/*"
+            />
         </>
     );
 }
