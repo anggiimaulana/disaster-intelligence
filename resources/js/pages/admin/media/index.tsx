@@ -140,7 +140,7 @@ export default function MediaIndex({ media, folders }: PageProps) {
                         <div key={item.id} onClick={() => setSelectedMedia(item)} className="group cursor-pointer rounded-xl border border-slate-200 bg-white p-2 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
                             <div className="aspect-square overflow-hidden rounded-lg bg-slate-100">
                                 {item.is_image || item.mime_type?.startsWith('image/') ? (
-                                    <img src={item.url} alt={item.original_name} className="h-full w-full object-cover" />
+                                    <img src={item.url} alt={item.original_name} className="h-full w-full object-contain" />
                                 ) : (
                                     <div className="flex h-full items-center justify-center text-slate-400">
                                         <FileText className="h-8 w-8" />
