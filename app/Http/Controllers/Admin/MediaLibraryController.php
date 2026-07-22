@@ -84,7 +84,7 @@ class MediaLibraryController extends Controller
                 $size = @filesize($absolutePath) ?: 0;
 
                 MediaLibrary::create([
-                    'user_id' => auth()->id() ?? 1,
+                    'user_id' => \Illuminate\Support\Facades\Auth::id() ?? 1,
                     'file_name' => $filename,
                     'original_name' => $filename,
                     'file_path' => $filePath,
@@ -116,7 +116,7 @@ class MediaLibraryController extends Controller
         foreach ($request->file('files') as $file) {
             $path = $file->store("media/{$folder}", 'public');
             $media = MediaLibrary::create([
-                'user_id' => auth()->id(),
+                'user_id' => \Illuminate\Support\Facades\Auth::id(),
                 'file_name' => basename($path),
                 'original_name' => $file->getClientOriginalName(),
                 'file_path' => $path,
