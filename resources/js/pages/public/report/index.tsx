@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, AlertTriangle, MessageCircle, Send, CheckCircle2, MapPin, Camera, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EthicalHero } from '@/components/ui/hero-ethical';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -298,7 +299,12 @@ export default function ReportPage({ supportedRegencies, disasterTypes }: Report
                                 {/* Deskripsi */}
                                 <div>
                                     <label className="block text-sm font-bold text-premium-heading mb-2">Deskripsi Kejadian *</label>
-                                    <textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} required rows={4} placeholder="Jelaskan kronologi kejadian, dampak, dan kondisi terkini..." className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading placeholder:text-premium-caption focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm resize-y" />
+                                    <RichTextEditor
+                                    value={deskripsi}
+                                    onChange={setDeskripsi}
+                                    placeholder="Jelaskan kronologi kejadian, dampak, dan kondisi terkini..."
+                                    minHeight="200px"
+                                />
                                 </div>
 
                                 {/* Lokasi dengan Peta */}

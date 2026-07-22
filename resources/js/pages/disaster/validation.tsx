@@ -2,6 +2,7 @@ import { Head, usePage, router, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Sparkline } from '@/components/disaster/sparkline';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import {
     AlertTriangle,
     Brain,
@@ -404,11 +405,11 @@ export default function Validation() {
                                 {/* Notes */}
                                 <div className="mb-4 rounded-lg border border-slate-100 p-4">
                                     <h4 className="mb-2 text-sm font-bold text-slate-900">Catatan Petugas</h4>
-                                    <textarea
+                                    <RichTextEditor
                                         value={validateForm.data.catatan}
-                                        onChange={(e) => validateForm.setData('catatan', e.target.value)}
+                                        onChange={(val) => validateForm.setData('catatan', val)}
                                         placeholder="Tulis catatan atau hasil observasi..."
-                                        className="h-20 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                        minHeight="150px"
                                     />
                                     {validateForm.errors.catatan && (
                                         <p className="mt-1 text-xs text-red-600">{validateForm.errors.catatan}</p>

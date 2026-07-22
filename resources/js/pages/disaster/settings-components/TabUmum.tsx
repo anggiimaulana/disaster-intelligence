@@ -1,6 +1,7 @@
 import { Shield, Upload, X, Trash2 } from 'lucide-react';
 import { useForm, router } from '@inertiajs/react';
 import { useState, useRef } from 'react';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 
 export default function TabUmum({ appSettings = {} }: { appSettings?: Record<string, any> }) {
     const [logoPreview, setLogoPreview] = useState(appSettings?.logo_url || '/icon.png');
@@ -108,11 +109,11 @@ export default function TabUmum({ appSettings = {} }: { appSettings?: Record<str
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1.5">Deskripsi Aplikasi</label>
-                            <textarea 
-                                rows={4}
+                            <RichTextEditor
                                 value={data.app_description}
-                                onChange={(e) => setData('app_description', e.target.value)}
-                                className="block w-full rounded-lg border border-slate-200 py-2.5 px-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white transition-colors"
+                                onChange={(val) => setData('app_description', val)}
+                                placeholder="Deskripsi aplikasi..."
+                                minHeight="150px"
                             />
                         </div>
                     </div>

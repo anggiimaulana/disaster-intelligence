@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import { MapPin, Phone, Mail, Clock, MessageCircle, Send, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EthicalHero } from '@/components/ui/hero-ethical';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import type { PageProps } from '@/types';
 
 const ContactMapClient = lazy(() => import('./ContactMapClient'));
@@ -132,13 +133,11 @@ export default function ContactPage({}: ContactPageProps) {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold text-premium-heading mb-2">Pesan</label>
-                                        <textarea
+                                        <RichTextEditor
                                             value={pesan}
-                                            onChange={(e) => setPesan(e.target.value)}
-                                            required
-                                            rows={5}
+                                            onChange={setPesan}
                                             placeholder="Tulis pesan atau pertanyaan Anda di sini..."
-                                            className="w-full rounded-[16px] border border-premium-border bg-premium-bg/50 px-5 py-3.5 text-sm text-premium-heading placeholder:text-premium-caption focus:outline-none focus:ring-2 focus:ring-premium-blue-accent/30 focus:border-premium-blue-accent transition-all shadow-sm resize-y"
+                                            minHeight="200px"
                                         />
                                     </div>
                                     <Button type="submit" className="w-full h-14 bg-gradient-to-r from-premium-navy to-premium-navy-dark hover:opacity-90 text-white rounded-[18px] text-base font-bold shadow-[0_10px_25px_rgba(11,42,82,0.25)] hover:shadow-[0_15px_35px_rgba(11,42,82,0.35)] hover:-translate-y-0.5 transition-all duration-300">

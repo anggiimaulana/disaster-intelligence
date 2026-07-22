@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { cn, formatDate, getDisasterLabel } from '@/lib/utils';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ArrowLeft, AlertTriangle, Bell, Brain, Check, CheckSquare, Clock, Copy, Download, ExternalLink, FileText, MapPin, MessageCircle, Phone, Share2, Waves, X, Loader2 } from 'lucide-react';
@@ -350,12 +351,11 @@ export default function IncidentShow({ report }: LaporanDetailProps) {
 
                             <div>
                                 <label className="mb-1 block text-sm font-medium text-slate-700">Pesan Peringatan</label>
-                                <textarea
+                                <RichTextEditor
                                     value={warningForm.pesan}
-                                    onChange={(e) => setWarningForm({ ...warningForm, pesan: e.target.value })}
-                                    rows={3}
+                                    onChange={(val) => setWarningForm((prev) => ({ ...prev, pesan: val }))}
                                     placeholder="Isi pesan peringatan (opsional, akan auto-fill dari deskripsi laporan)"
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    minHeight="150px"
                                 />
                             </div>
                         </div>

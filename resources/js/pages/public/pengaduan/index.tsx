@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import RichTextEditor from '@/components/ui/rich-text-editor';
 import {
     AlertCircle,
     AlertTriangle,
@@ -864,14 +865,11 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Deskripsi Kejadian <span className="text-red-500">*</span>
                             </label>
-                            <textarea
+                            <RichTextEditor
                                 value={data.deskripsi}
-                                onChange={(e) => setData('deskripsi', e.target.value)}
-                                rows={4}
-                                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                    errors.deskripsi ? 'border-red-500' : 'border-gray-300'
-                                }`}
+                                onChange={(val) => setData('deskripsi', val)}
                                 placeholder="Jelaskan kronologi kejadian secara detail..."
+                                minHeight="200px"
                             />
                             {errors.deskripsi && (
                                 <p className="text-red-500 text-xs mt-1">{errors.deskripsi}</p>
