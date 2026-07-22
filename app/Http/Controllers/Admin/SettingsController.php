@@ -11,11 +11,6 @@ use Illuminate\Validation\Rule;
 
 class SettingsController extends Controller
 {
-    /**
-     * Whitelist of editable scalar settings. Anything else is rejected
-     * (SEC code-review #2). File-upload keys (logo_file, favicon_file)
-     * and the array editor key are handled by separate routes.
-     */
     private const SCALAR_KEYS = [
         'app_name', 'app_description', 'app_instansi', 'app_lang',
         'app_date_format', 'info_sumber_data',
@@ -25,6 +20,19 @@ class SettingsController extends Controller
         'integration_wa_config_url', 'integration_n8n_config_url',
         'integration_ai_config_url', 'integration_email_config_url',
         'integration_sms_config_url',
+
+        'ai_provider', 'ai_base_url', 'ai_model', 'ai_api_key',
+        'ai_min_confidence', 'ai_auto_classification', 'ai_auto_location',
+
+        'map_default_zoom', 'map_layer_risiko', 'map_cluster_marker',
+        'map_center_lat', 'map_center_lng',
+
+        'security_2fa_enabled', 'security_2fa_methods',
+
+        'whatsapp_number', 'whatsapp_api_url', 'whatsapp_api_key',
+        'call_center', 'email_pengaduan', 'alamat_kantor',
+        'latitude_kantor', 'longitude_kantor', 'waktu_tanggap_darurat',
+        'kabupaten_default', 'provinsi',
     ];
 
     private const FILE_KEYS = [
@@ -32,9 +40,6 @@ class SettingsController extends Controller
         'favicon_file' => ['mimes:ico,png,svg', 'max:512'],
     ];
 
-    /**
-     * Upsert settings from request.
-     */
     public function update(Request $request)
     {
         $data = $request->except(['_token', '_method']);
@@ -145,7 +150,7 @@ class SettingsController extends Controller
     public function testAiConnection(Request $request)
     {
         $validated = $request->validate([
-            'ai_provider' => ['required', 'string', Rule::in(['openai', 'claude', 'gemini'])],
+            'ai_provider' => ['required', 'string', Rule::in(['openai-compatible', 'claude', 'gemini'])],
             'ai_base_url' => ['required', 'url'],
             'ai_model' => 'required|string|max:255',
             'ai_api_key' => 'required|string|max:500',

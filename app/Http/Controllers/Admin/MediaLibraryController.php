@@ -12,6 +12,8 @@ class MediaLibraryController extends Controller
 {
     public function index(Request $request)
     {
+        $this->syncStorageFiles();
+
         $query = MediaLibrary::orderBy('created_at', 'desc');
 
         if ($request->filled('folder')) {
@@ -47,6 +49,57 @@ class MediaLibraryController extends Controller
             'media' => $media,
             'folders' => MediaLibrary::distinct()->pluck('folder')->filter()->toArray(),
         ]);
+    }
+
+    public function sync(Request $request)
+    {
+        $count = $this->syncStorageFiles();
+
+        return back()->with('success', "Media sync selesai. {$count} file baru ditambahkan ke library.");
+    }
+
+    private function syncStorageFiles(): int
+    {
+        $count = 0;
+        try {
+            $files = Storage::disk('public')->allFiles();
+            $existingPaths = MediaLibrary::pluck('file_path')->toArray();
+            $existingSet = array_flip($existingPaths);
+
+            foreach ($files as $filePath) {
+                $filename = basename($filePath);
+                if (str_starts_with($filename, '.') || $filename === 'hot' || $filename === '.gitignore') {
+                    continue;
+                }
+
+                if (isset($existingSet[$filePath])) {
+                    continue;
+                }
+
+                $folderDir = dirname($filePath);
+                $folder = ($folderDir === '.' || $folderDir === '') ? 'general' : $folderDir;
+                $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+                $absolutePath = Storage::disk('public')->path($filePath);
+                $mimeType = @mime_content_type($absolutePath) ?: 'application/octet-stream';
+                $size = @filesize($absolutePath) ?: 0;
+
+                MediaLibrary::create([
+                    'user_id' => auth()->id() ?? 1,
+                    'file_name' => $filename,
+                    'original_name' => $filename,
+                    'file_path' => $filePath,
+                    'file_type' => $extension,
+                    'mime_type' => $mimeType,
+                    'file_size' => $size,
+                    'folder' => $folder,
+                ]);
+
+                $count++;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        return $count;
     }
 
     public function store(Request $request)

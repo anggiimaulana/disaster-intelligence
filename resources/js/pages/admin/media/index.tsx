@@ -1,7 +1,7 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Image, Upload, Trash2, X, Loader2, Folder, Search, Grid, List, FileText } from 'lucide-react';
+import { Image, Upload, Trash2, X, Loader2, Folder, Search, Grid, List, FileText, RefreshCw } from 'lucide-react';
 
 interface MediaItem {
     id: number;
@@ -28,6 +28,7 @@ interface PageProps {
 
 export default function MediaIndex({ media, folders }: PageProps) {
     const [uploading, setUploading] = useState(false);
+    const [syncing, setSyncing] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [selectedFolder, setSelectedFolder] = useState('');
     const [search, setSearch] = useState('');
@@ -36,6 +37,14 @@ export default function MediaIndex({ media, folders }: PageProps) {
     const [editMedia, setEditMedia] = useState<MediaItem | null>(null);
     const [editForm, setEditForm] = useState({ original_name: '', folder: '' });
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleSync = () => {
+        setSyncing(true);
+        router.post('/cms/media/sync', {}, {
+            preserveScroll: true,
+            onFinish: () => setSyncing(false),
+        });
+    };
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -91,6 +100,10 @@ export default function MediaIndex({ media, folders }: PageProps) {
                     <p className="mt-1 text-sm text-slate-500">{media.total} file</p>
                 </div>
                 <div className="flex gap-2">
+                    <button onClick={handleSync} disabled={syncing} className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-60">
+                        <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
+                        <span>Sync Storage</span>
+                    </button>
                     <button onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')} className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
                         {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
                     </button>

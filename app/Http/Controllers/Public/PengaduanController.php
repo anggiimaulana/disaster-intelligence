@@ -435,15 +435,18 @@ class PengaduanController extends Controller
     {
         $kabupaten = $request->input('kabupaten');
         $cacheKey = $kabupaten
-            ? "desa_by_kecamatan:{$kabupaten}:{$kecamatan}"
-            : "desa_by_kecamatan:all:{$kecamatan}";
+            ? "desa_by_kecamatan_v2:{$kabupaten}:{$kecamatan}"
+            : "desa_by_kecamatan_v2:all:{$kecamatan}";
 
         $desa = Cache::remember($cacheKey, 3600, function () use ($kecamatan, $kabupaten) {
             $query = Wilayah::query();
 
-            // Support code or name
-            if (ctype_digit($kecamatan)) {
-                $query->where('kode_kecamatan', $kecamatan);
+            $cleanKecCode = str_replace('.', '', $kecamatan);
+            if (ctype_digit($cleanKecCode)) {
+                $query->where(function ($q) use ($kecamatan, $cleanKecCode) {
+                    $q->where('kode_kecamatan', $cleanKecCode)
+                      ->orWhere('kode_kecamatan', $kecamatan);
+                });
             } else {
                 $query->where('kecamatan', $kecamatan);
             }
@@ -451,8 +454,12 @@ class PengaduanController extends Controller
             $query->whereNotNull('desa');
 
             if ($kabupaten) {
-                if (ctype_digit($kabupaten)) {
-                    $query->where('kode_kabupaten', $kabupaten);
+                $cleanKabCode = str_replace('.', '', $kabupaten);
+                if (ctype_digit($cleanKabCode)) {
+                    $query->where(function ($q) use ($kabupaten, $cleanKabCode) {
+                        $q->where('kode_kabupaten', $cleanKabCode)
+                          ->orWhere('kode_kabupaten', $kabupaten);
+                    });
                 } else {
                     $query->where('kabupaten', $this->normalizeWilayahName($kabupaten));
                 }
@@ -724,19 +731,24 @@ class PengaduanController extends Controller
      */
     public function getKecamatanByKabupaten(string $kabupaten): JsonResponse
     {
-        $isCode = ctype_digit($kabupaten);
-        $cacheKey = $isCode
-            ? "kecamatan_by_kabupaten_code:{$kabupaten}"
-            : "kecamatan_by_kabupaten:{$kabupaten}";
+        $cleanCode = str_replace('.', '', $kabupaten);
+        $isCode = ctype_digit($cleanCode);
+        $cacheKey = 'kecamatan_by_kabupaten_v5:'.md5($kabupaten);
 
-        $kecamatan = Cache::remember($cacheKey, 3600, function () use ($kabupaten, $isCode) {
+        $kecamatan = Cache::remember($cacheKey, 3600, function () use ($kabupaten, $cleanCode, $isCode) {
             $query = Wilayah::query();
 
             if ($isCode) {
-                $query->where('kode_kabupaten', $kabupaten);
+                $query->where(function ($q) use ($kabupaten, $cleanCode) {
+                    $q->where('kode_kabupaten', $cleanCode)
+                      ->orWhere('kode_kabupaten', $kabupaten);
+                });
             } else {
                 $normalized = $this->normalizeWilayahName($kabupaten);
-                $query->where('kabupaten', $normalized);
+                $query->where(function ($q) use ($kabupaten, $normalized) {
+                    $q->where('kabupaten', $normalized)
+                      ->orWhere('kabupaten', 'LIKE', "%{$normalized}%");
+                });
             }
 
             $results = $query->select('kode_kecamatan', 'kecamatan')
@@ -751,8 +763,9 @@ class PengaduanController extends Controller
 
             if (empty($results)) {
                 $apiUrl = config('services.wilayah_api.url');
-                if ($apiUrl && $isCode) {
-                    $response = Http::get("{$apiUrl}/districts/{$kabupaten}.json");
+                if ($apiUrl) {
+                    $targetCode = $cleanCode;
+                    $response = Http::get("{$apiUrl}/districts/{$targetCode}.json");
                     if ($response->successful()) {
                         return collect($response->json())->map(fn ($d) => [
                             'code' => $d['id'],

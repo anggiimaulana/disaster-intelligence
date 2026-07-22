@@ -31,9 +31,11 @@ interface PageProps {
     title: string;
     supportedRegencies: SupportedRegency[];
     wilayahData: WilayahKabupaten[];
+    usesApi: boolean;
+    apiUrl: string | null;
 }
 
-export default function Regencies({ title, supportedRegencies, wilayahData }: PageProps) {
+export default function Regencies({ title, supportedRegencies, wilayahData, usesApi, apiUrl }: PageProps) {
     const [togglingId, setTogglingId] = useState<number | null>(null);
     const [search, setSearch] = useState('');
     const [expandedKab, setExpandedKab] = useState<Record<string, boolean>>({});
@@ -87,7 +89,8 @@ export default function Regencies({ title, supportedRegencies, wilayahData }: Pa
                 <h1 className="text-xl font-bold text-slate-900">{title}</h1>
                 <p className="mt-1 text-sm text-slate-500">
                     {activeCount} aktif dari {supportedRegencies.length} total kabupaten/kota
-                    &middot; {totalKec} kecamatan &middot; {totalDesa} desa
+                    {!usesApi && <>&middot; {totalKec} kecamatan &middot; {totalDesa} desa</>}
+                    {usesApi && <span className="ml-2 inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">Via API: {apiUrl}</span>}
                 </p>
             </div>
 
@@ -185,8 +188,12 @@ export default function Regencies({ title, supportedRegencies, wilayahData }: Pa
                                             <td className={cn('px-4 py-3 font-medium', item.is_active ? 'text-slate-900' : 'text-slate-500')}>
                                                 {item.name}
                                             </td>
-                                            <td className="px-4 py-3 text-xs text-slate-500">{kecCount > 0 ? `${kecCount} kecamatan` : '-'}</td>
-                                            <td className="px-4 py-3 text-xs text-slate-500">{desaCount > 0 ? `${desaCount} desa` : '-'}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-500">
+                                                {kecCount > 0 ? `${kecCount} kecamatan` : (usesApi && item.is_active ? 'Dari API' : '-')}
+                                            </td>
+                                            <td className="px-4 py-3 text-xs text-slate-500">
+                                                {desaCount > 0 ? `${desaCount} desa` : (usesApi && item.is_active ? 'Dari API' : '-')}
+                                            </td>
                                             <td className="px-4 py-3">
                                                 <span
                                                     className={cn(

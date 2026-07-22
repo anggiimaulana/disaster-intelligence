@@ -239,6 +239,7 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
 
     // Media Library
     Route::get('media', [MediaLibraryController::class, 'index'])->name('admin.media.index');
+    Route::post('media/sync', [MediaLibraryController::class, 'sync'])->name('admin.media.sync');
     Route::post('media', [MediaLibraryController::class, 'store'])
         ->middleware('permission:manage news')
         ->name('admin.media.store');
