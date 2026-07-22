@@ -6,7 +6,7 @@ import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import Highlight from '@tiptap/extension-highlight';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { MediaLibraryPicker } from './media-library-picker';
 import {
@@ -185,6 +185,12 @@ export default function RichTextEditor({
             },
         },
     });
+
+    useEffect(() => {
+        if (editor && editor.getHTML() !== value) {
+            editor.commands.setContent(value, { emitUpdate: false });
+        }
+    }, [editor, value]);
 
     const handleImageButtonClick = () => {
         if (!editor) return;

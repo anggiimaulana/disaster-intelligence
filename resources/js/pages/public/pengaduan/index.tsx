@@ -1175,8 +1175,8 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
                     <div className="pt-4 border-t border-gray-100">
                         <button
                             type="submit"
-                            disabled={isFormIncomplete || isSubmitting || processing}
-                            title={isFormIncomplete ? 'Lengkapi semua data wajib terlebih dahulu' : 'Kirim laporan'}
+                            disabled={isSubmitting || processing}
+                            title={'Kirim laporan'}
                             className="w-full py-3.5 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
                         >
                             {isSubmitting ? (
@@ -1184,8 +1184,6 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
                                     <Loader2 className="w-5 h-5 animate-spin" />
                                     Mengirim...
                                 </>
-                            ) : isFormIncomplete ? (
-                                'Lengkapi Data'
                             ) : (
                                 'Kirim Laporan'
                             )}
