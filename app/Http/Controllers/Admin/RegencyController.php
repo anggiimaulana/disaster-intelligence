@@ -93,7 +93,7 @@ class RegencyController extends Controller
             'title' => 'Pengaturan Wilayah — Jawa Barat',
             'supportedRegencies' => $regencies,
             'wilayahData' => $wilayahData,
-            'usesApi' => !empty(config('services.wilayah_api.url')),
+            'usesApi' => ! empty(config('services.wilayah_api.url')),
             'apiUrl' => config('services.wilayah_api.url'),
         ]);
     }

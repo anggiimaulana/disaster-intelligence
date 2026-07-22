@@ -686,8 +686,7 @@ export default function PengaduanIndex({ jenisBencana, kabupatenList }: Props) {
             <Head title="Lapor Bencana - Disaster Intelligence" />
             {notification && createPortal(
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2147483647, pointerEvents: 'none' }}>
-                    <div style={{ position: 'absolute', bottom: '24px', right: '24px', maxWidth: '24rem', pointerEvents: 'auto' }}
-                         className={`${notification.type === 'success' ? 'bg-green-600' : notification.type === 'error' ? 'bg-red-600' : notification.type === 'warning' ? 'bg-amber-600' : 'bg-blue-600'} text-white px-5 py-4 rounded-xl shadow-2xl flex items-start gap-3 animate-slide-in`}>
+                    <div className={`absolute bottom-4 left-4 right-4 sm:left-auto sm:bottom-6 sm:right-6 sm:w-auto sm:min-w-[320px] sm:max-w-md ${notification.type === 'success' ? 'bg-green-600' : notification.type === 'error' ? 'bg-red-600' : notification.type === 'warning' ? 'bg-amber-600' : 'bg-blue-600'} text-white p-4 sm:px-5 sm:py-4 rounded-xl shadow-2xl flex items-start gap-3 animate-slide-in pointer-events-auto`}>
                         {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" /> :
                          notification.type === 'error' ? <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" /> :
                          notification.type === 'warning' ? <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" /> :

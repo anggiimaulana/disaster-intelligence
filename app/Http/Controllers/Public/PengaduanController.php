@@ -445,7 +445,7 @@ class PengaduanController extends Controller
             if (ctype_digit($cleanKecCode)) {
                 $query->where(function ($q) use ($kecamatan, $cleanKecCode) {
                     $q->where('kode_kecamatan', $cleanKecCode)
-                      ->orWhere('kode_kecamatan', $kecamatan);
+                        ->orWhere('kode_kecamatan', $kecamatan);
                 });
             } else {
                 $query->where('kecamatan', $kecamatan);
@@ -458,7 +458,7 @@ class PengaduanController extends Controller
                 if (ctype_digit($cleanKabCode)) {
                     $query->where(function ($q) use ($kabupaten, $cleanKabCode) {
                         $q->where('kode_kabupaten', $cleanKabCode)
-                          ->orWhere('kode_kabupaten', $kabupaten);
+                            ->orWhere('kode_kabupaten', $kabupaten);
                     });
                 } else {
                     $query->where('kabupaten', $this->normalizeWilayahName($kabupaten));
@@ -741,13 +741,13 @@ class PengaduanController extends Controller
             if ($isCode) {
                 $query->where(function ($q) use ($kabupaten, $cleanCode) {
                     $q->where('kode_kabupaten', $cleanCode)
-                      ->orWhere('kode_kabupaten', $kabupaten);
+                        ->orWhere('kode_kabupaten', $kabupaten);
                 });
             } else {
                 $normalized = $this->normalizeWilayahName($kabupaten);
-                $query->where(function ($q) use ($kabupaten, $normalized) {
+                $query->where(function ($q) use ($normalized) {
                     $q->where('kabupaten', $normalized)
-                      ->orWhere('kabupaten', 'LIKE', "%{$normalized}%");
+                        ->orWhere('kabupaten', 'LIKE', "%{$normalized}%");
                 });
             }
 

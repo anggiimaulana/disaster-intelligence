@@ -23,6 +23,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import RichTextEditor from '@/components/ui/rich-text-editor';
 
+const stripHtml = (html: string) => html ? html.replace(/<[^>]*>?/gm, '') : '';
+
 export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riwayatPeringatan, distribusiNotifikasi, targetNotifikasi, mapMarkers, trendData, supportedRegencies }: any) {
     const [open, setOpen] = useState(false);
     const { data, setData, post, put, processing, reset, errors } = useForm({
@@ -221,7 +223,7 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                                     <AlertTriangle className={cn('h-3.5 w-3.5', a.risk_level === 'TINGGI' ? 'text-red-600' : a.risk_level === 'SEDANG' ? 'text-amber-600' : a.risk_level === 'RENDAH' ? 'text-green-600' : 'text-slate-500')} />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-slate-900">{a.judul}</p>
+                                    <p className="text-sm font-medium text-slate-900 line-clamp-1" title={stripHtml(a.judul)}>{stripHtml(a.judul)}</p>
                                     <p className="text-xs text-slate-500"><MapPin className="mr-0.5 inline h-3 w-3" />{a.kecamatan}</p>
                                     <p className="text-xs text-slate-400">{a.waktu}</p>
                                 </div>
@@ -244,7 +246,7 @@ export default function Alerts({ jenisBencana, stats: dbStats, activeAlerts, riw
                         <thead className="border-b border-slate-100"><tr><th className="pb-2 text-xs text-slate-500">Judul</th><th className="pb-2 text-xs text-slate-500">Wilayah</th><th className="pb-2 text-xs text-slate-500">Tingkat</th><th className="pb-2 text-xs text-slate-500">Waktu</th><th className="pb-2 text-xs text-slate-500">Status</th><th className="pb-2 text-xs text-slate-500 text-right">Aksi</th></tr></thead>
                         <tbody className="divide-y divide-slate-50">
                             {riwayatPeringatan?.map((r: any, i: number) => (
-                                <tr key={i}><td className="py-2 text-sm text-slate-900">{r.judul}</td><td className="py-2 text-sm text-slate-600">{r.wilayah}</td><td className="py-2"><span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', r.tingkat === 'TINGGI' ? 'bg-red-100 text-red-700' : r.tingkat === 'SEDANG' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700')}>{r.tingkat}</span></td><td className="py-2 text-xs text-slate-500">{r.waktu_dibuat}</td><td className="py-2"><span className={cn('text-xs font-medium', r.status === 'Aktif' ? 'text-green-600' : 'text-slate-400')}>{r.status}</span></td>
+                                <tr key={i}><td className="py-2 text-sm text-slate-900"><div className="line-clamp-2" title={stripHtml(r.judul)}>{stripHtml(r.judul)}</div></td><td className="py-2 text-sm text-slate-600">{r.wilayah}</td><td className="py-2"><span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', r.tingkat === 'TINGGI' ? 'bg-red-100 text-red-700' : r.tingkat === 'SEDANG' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700')}>{r.tingkat}</span></td><td className="py-2 text-xs text-slate-500">{r.waktu_dibuat}</td><td className="py-2"><span className={cn('text-xs font-medium', r.status === 'Aktif' ? 'text-green-600' : 'text-slate-400')}>{r.status}</span></td>
                                 <td className="py-2 text-right">
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => openEdit(r)} className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"><Edit2 className="h-4 w-4" /></button>

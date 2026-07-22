@@ -20,9 +20,13 @@ interface ActiveAlertCardProps {
     variant?: 'compact' | 'full';
 }
 
+const stripHtml = (html: string) => html ? html.replace(/<[^>]*>?/gm, '') : '';
+
 export default function ActiveAlertCard({ alert, variant = 'full' }: ActiveAlertCardProps) {
     const Icon = DISASTER_ICONS[alert.disasterType] ?? HelpCircle;
     const colors = RISK_COLORS[alert.riskLevel] ?? RISK_COLORS.RENDAH;
+    const cleanTitle = stripHtml(alert.title);
+    const cleanSummary = stripHtml(alert.summary);
 
     if (variant === 'compact') {
         return (
@@ -33,12 +37,12 @@ export default function ActiveAlertCard({ alert, variant = 'full' }: ActiveAlert
                     </div>
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-bold text-[#1F2937]">{alert.title}</span>
+                            <span className="text-sm font-bold text-[#1F2937] line-clamp-1">{cleanTitle}</span>
                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>
                                 {alert.riskLevel}
                             </span>
                         </div>
-                        <p className="text-xs text-[#4B5563] mt-0.5">
+                        <p className="text-xs text-[#4B5563] mt-0.5 line-clamp-1">
                             {alert.district} — {alert.village}
                         </p>
                     </div>
@@ -55,7 +59,7 @@ export default function ActiveAlertCard({ alert, variant = 'full' }: ActiveAlert
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-base font-bold text-[#1F2937]">{alert.title}</span>
+                        <span className="text-base font-bold text-[#1F2937]">{cleanTitle}</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors.bg} ${colors.text}`}>
                             {alert.riskLevel}
                         </span>
@@ -69,7 +73,7 @@ export default function ActiveAlertCard({ alert, variant = 'full' }: ActiveAlert
                     <p className="text-sm text-[#4B5563] mt-1">
                         {alert.district} — {alert.village}
                     </p>
-                    <p className="text-sm text-[#6B7280] mt-2">{alert.summary}</p>
+                    <p className="text-sm text-[#6B7280] mt-2 line-clamp-2">{cleanSummary}</p>
                     {alert.recommendedAction && (
                         <div className="flex items-start gap-2 mt-3 text-xs text-[#4B5563]">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />

@@ -17,14 +17,14 @@ class WilayahController extends Controller
         if ($isCode) {
             $query->where(function ($q) use ($regency, $cleanCode) {
                 $q->where('kode_kabupaten', $cleanCode)
-                  ->orWhere('kode_kabupaten', $regency);
+                    ->orWhere('kode_kabupaten', $regency);
             });
         } else {
             $normalized = preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $regency);
             $normalized = ucwords(strtolower(trim($normalized)));
-            $query->where(function ($q) use ($regency, $normalized) {
+            $query->where(function ($q) use ($normalized) {
                 $q->where('kabupaten', $normalized)
-                  ->orWhere('kabupaten', 'LIKE', "%{$normalized}%");
+                    ->orWhere('kabupaten', 'LIKE', "%{$normalized}%");
             });
         }
 
@@ -68,7 +68,7 @@ class WilayahController extends Controller
         if ($isDistCode) {
             $query->where(function ($q) use ($district, $cleanDistCode) {
                 $q->where('kode_kecamatan', $cleanDistCode)
-                  ->orWhere('kode_kecamatan', $district);
+                    ->orWhere('kode_kecamatan', $district);
             });
         } else {
             $query->where('kecamatan', $district);
@@ -79,7 +79,7 @@ class WilayahController extends Controller
             if (ctype_digit($cleanKabCode)) {
                 $query->where(function ($q) use ($kabupaten, $cleanKabCode) {
                     $q->where('kode_kabupaten', $cleanKabCode)
-                      ->orWhere('kode_kabupaten', $kabupaten);
+                        ->orWhere('kode_kabupaten', $kabupaten);
                 });
             } else {
                 $normalized = preg_replace('/^(KABUPATEN|KOTA)\s+/i', '', $kabupaten);

@@ -21,9 +21,9 @@ interface Laporan {
     media: Array<{ id: number; media_type: string; file_path: string; file_url: string }>;
     validasi: { id: number; hasil_validasi: string; catatan: string | null; admin: { id: number; name: string } } | null;
     wilayah: { id: number; provinsi: string; kabupaten: string; kecamatan: string; desa: string } | null;
-    earlyWarnings: Array<{ id: number; level_warning: string; pesan: string; status: string }>;
-    mlPredictions: Array<{ id: number; model_name: string; prediksi_bencana: string; confidence_score: number }>;
-    nlpAnalysis: { id: number; extracted_keywords: string; sentiment: string; cleaned_text: string } | null;
+    early_warnings: Array<{ id: number; level_warning: string; pesan: string; status: string }>;
+    ml_predictions: Array<{ id: number; model_name: string; prediksi_bencana: string; confidence_score: number }>;
+    nlp_analysis: { id: number; extracted_keywords: string; sentiment: string; cleaned_text: string } | null;
 }
 
 const RISK_COLORS: Record<string, string> = {
@@ -98,10 +98,10 @@ export default function ValidationShow({ laporan }: { laporan: Laporan }) {
                                 <span className={cn('ml-2 font-medium', laporan.validasi_admin ? 'text-green-600' : 'text-slate-400')}>{laporan.validasi_admin ? 'Selesai' : 'Pending'}</span>
                             </div>
                         </div>
-                        {laporan.nlpAnalysis && (
+                        {laporan.nlp_analysis && (
                             <div className="mt-3 text-sm">
-                                <p className="text-blue-600 font-medium">Sentimen: {laporan.nlpAnalysis.sentiment}</p>
-                                <p className="mt-1 text-slate-600">Keywords: {laporan.nlpAnalysis.extracted_keywords}</p>
+                                <p className="text-blue-600 font-medium">Sentimen: {laporan.nlp_analysis.sentiment}</p>
+                                <p className="mt-1 text-slate-600">Keywords: {laporan.nlp_analysis.extracted_keywords}</p>
                             </div>
                         )}
                     </div>
@@ -129,11 +129,11 @@ export default function ValidationShow({ laporan }: { laporan: Laporan }) {
                     )}
 
                     {/* Early Warnings */}
-                    {laporan.earlyWarnings.length > 0 && (
+                    {laporan.early_warnings.length > 0 && (
                         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                             <h3 className="mb-3 text-sm font-bold text-slate-900">Peringatan Dini</h3>
                             <div className="space-y-2">
-                                {laporan.earlyWarnings.map((w) => (
+                                {laporan.early_warnings.map((w) => (
                                     <div key={w.id} className="rounded-lg bg-amber-50 p-3 text-sm">
                                         <p className="font-medium text-amber-800">{w.level_warning}</p>
                                         <p className="text-xs text-amber-600">{w.pesan}</p>
@@ -144,11 +144,11 @@ export default function ValidationShow({ laporan }: { laporan: Laporan }) {
                     )}
 
                     {/* ML Predictions */}
-                    {laporan.mlPredictions.length > 0 && (
+                    {laporan.ml_predictions.length > 0 && (
                         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                             <h3 className="mb-3 text-sm font-bold text-slate-900">Prediksi ML</h3>
                             <div className="space-y-2">
-                                {laporan.mlPredictions.map((p) => (
+                                {laporan.ml_predictions.map((p) => (
                                     <div key={p.id} className="rounded-lg bg-purple-50 p-3 text-sm">
                                         <p className="font-medium text-purple-800">{p.model_name}</p>
                                         <p className="text-xs text-purple-600">Confidence: {(p.confidence_score * 100).toFixed(1)}%</p>

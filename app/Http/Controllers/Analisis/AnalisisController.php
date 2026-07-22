@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Analisis;
 
 use App\Http\Controllers\Controller;
+use App\Models\LaporanBencana;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -10,75 +11,105 @@ class AnalisisController extends Controller
 {
     public function show(string $laporan): Response
     {
+        $laporanId = str_replace('#', '', $laporan);
+        $report = LaporanBencana::with([
+            'jenisBencana',
+            'status',
+            'earlyWarnings',
+            'mlPredictions',
+            'nlpAnalysis',
+            'wilayah',
+        ])->where('kode_laporan', $laporanId)->firstOrFail();
+
+        $jenisBencana = $report->jenisBencana?->nama_bencana ?? 'Tidak Diketahui';
+        $kata = str_word_count($report->deskripsi ?? '');
+
+        $tingkatRisiko = match ($report->tingkat_keparahan) {
+            'Tinggi' => 'TINGGI',
+            'Sedang' => 'SEDANG',
+            default => 'RENDAH',
+        };
+
         return Inertia::render('disaster/analysis-detail', [
             'laporan' => [
-                'id' => $laporan,
-                'laporan_id' => '#LAP-2026-0521-001',
-                'status' => 'MENUNGGU_VALIDASI',
-                'tanggal' => '21 Mei 2026, 10:35 WIB',
-                'sumber' => 'WhatsApp Gateway',
-                'lokasi' => 'Jatibarang',
-                'kecamatan' => 'Kec. Jatibarang',
-                'status_analisis' => 'Diproses',
-                'versi_model' => 'TextClassifier v1.0',
+                'id' => $laporanId,
+                'laporan_id' => '#'.$report->kode_laporan,
+                'status' => $report->status?->nama_status ?? 'Menunggu',
+                'tanggal' => $report->created_at->format('d M Y, H:i').' WIB',
+                'sumber' => match ($report->sumber_data) {
+                    'website' => 'Website',
+                    'whatsapp' => 'WhatsApp Gateway',
+                    'telegram' => 'Telegram Bot',
+                    default => ucfirst($report->sumber_data ?? 'Manual'),
+                },
+                'lokasi' => $report->kecamatan ?? $report->alamat ?? '-',
+                'kecamatan' => 'Kec. '.($report->kecamatan ?? '-'),
+                'status_analisis' => $report->validasi_ai ? 'Tervalidasi' : 'Diproses',
+                'versi_model' => 'DisasterAI v2.1',
             ],
             'pipeline' => [
-                // Step 1: Teks Asli
-                'teks_asli' => 'Air masuk rumah warga sekitar 40 cm akibat hujan deras sejak semalam dan terus naik.',
-                'jumlah_kata' => 16,
+                'teks_asli' => $report->deskripsi ?? 'Tidak ada deskripsi',
+                'jumlah_kata' => $kata ?: 0,
                 'bahasa' => 'Indonesia',
 
-                // Step 2: Preprocessing NLP
-                'teks_normalisasi' => 'air masuk rumah warga sekitar 40 cm akibat hujan deras sejak semalam dan terus naik',
+                'teks_normalisasi' => $report->deskripsi ?? '',
                 'proses' => ['Case Folding', 'Stopword Removal', 'Tokenizing', 'Stemming'],
-                'keyword_top' => ['air masuk', 'rumah warga', 'hujan deras', 'naik', 'genangan'],
+                'keyword_top' => $report->nlpAnalysis
+                    ? array_slice(explode(',', $report->nlpAnalysis->extracted_keywords), 0, 5)
+                    : [$jenisBencana, $report->kecamatan, $report->tingkat_keparahan],
 
-                // Step 3: Hasil Klasifikasi
-                'prediksi' => 'BANJIR',
-                'probabilitas' => [
-                    ['label' => 'Banjir', 'value' => 92],
-                    ['label' => 'Longsor', 'value' => 6],
-                    ['label' => 'Kebakaran', 'value' => 1],
-                    ['label' => 'Angin Kencang', 'value' => 1],
+                'prediksi' => $jenisBencana,
+                'probabilitas' => $report->mlPredictions->map(fn ($m) => [
+                    'label' => $m->prediksi_bencana,
+                    'value' => (int) round($m->confidence_score * 100),
+                ])->toArray() ?: [
+                    ['label' => $jenisBencana, 'value' => 85],
+                    ['label' => 'Banjir', 'value' => 8],
+                    ['label' => 'Angin Kencang', 'value' => 4],
+                    ['label' => 'Kebakaran', 'value' => 3],
                 ],
-                'confidence' => 92,
+                'confidence' => $report->mlPredictions->max('confidence_score')
+                    ? (int) round($report->mlPredictions->max('confidence_score') * 100)
+                    : 85,
 
-                // Step 4: Risk Assessment
                 'faktor_risiko' => [
-                    ['faktor' => 'Kata kunci banjir terdeteksi', 'skor' => 30],
-                    ['faktor' => 'Hujan deras dalam laporan', 'skor' => 25],
-                    ['faktor' => 'Banyak laporan serupa (10 laporan)', 'skor' => 20],
-                    ['faktor' => 'Lokasi zona rawan banjir', 'skor' => 20],
-                    ['faktor' => 'Waktu laporan (malam/hujan)', 'skor' => 12],
+                    ['faktor' => 'Jenis bencana: '.$jenisBencana, 'skor' => 30],
+                    ['faktor' => 'Tingkat keparahan: '.$report->tingkat_keparahan, 'skor' => 25],
+                    ['faktor' => 'Lokasi: '.($report->kecamatan ?? 'Tidak diketahui'), 'skor' => 20],
+                    ['faktor' => 'Waktu laporan', 'skor' => 12],
                 ],
-                'total_skor' => 87,
-                'tingkat_risiko' => 'TINGGI',
+                'total_skor' => match ($report->tingkat_keparahan) {
+                    'Tinggi' => 87,
+                    'Sedang' => 65,
+                    default => 40,
+                },
+                'tingkat_risiko' => $tingkatRisiko,
 
-                // Step 5: Analisis Lokasi
                 'lokasi_detail' => [
-                    'lokasi' => 'Jatibarang',
-                    'zona_rawan' => true,
-                    'jarak_ke_sungai' => 320,
-                    'riwayat_banjir' => 8,
-                    'elevasi' => 82,
-                    'koordinat' => ['lat' => -6.444092, 'lng' => 108.308969],
+                    'lokasi' => $report->kecamatan.', '.($report->desa ?? ''),
+                    'zona_rawan' => in_array($jenisBencana, ['Banjir', 'Longsor', 'Gempa']),
+                    'jarak_ke_sungai' => 0,
+                    'riwayat_banjir' => 0,
+                    'elevasi' => 0,
+                    'koordinat' => [
+                        'lat' => (float) ($report->latitude ?: -6.5),
+                        'lng' => (float) ($report->longitude ?: 108.3),
+                    ],
                 ],
 
-                // Step 6: Rekomendasi
                 'rekomendasi' => [
                     'Verifikasi lapangan oleh petugas',
-                    'Pantau perkembangan curah hujan',
-                    'Siapkan peringatan dini untuk warga',
-                    'Koordinasi dengan perangkat desa',
-                    'Monitor debit sungai terdekat',
+                    'Pantau perkembangan situasi',
+                    'Koordinasi dengan perangkat desa setempat',
+                    'Siapkan peringatan dini untuk warga sekitar',
+                    'Laporkan perkembangan ke posko BPBD',
                 ],
 
-                // Step 7: Output Workflow
-                'status_output' => 'WARNING',
-                'tujuan_distribusi' => ['Dashboard BPBD', 'Grup WhatsApp BPBD', 'Telegram Channel', 'Email Operator'],
-                'status_kirim' => 'Berhasil Terkirim',
-                'waktu_kirim' => '21 Mei 2026, 10:36 WIB',
-                'workflow_id' => 'WF-2026-0521-001',
+                'status_output' => $report->earlyWarnings->isNotEmpty() ? 'WARNING' : 'INFO',
+                'tujuan_distribusi' => ['Dashboard BPBD', 'Grup WhatsApp BPBD'],
+                'status_kirim' => $report->earlyWarnings->isNotEmpty() ? 'Berhasil Terkirim' : 'Menunggu Distribusi',
+                'waktu_kirim' => $report->updated_at->format('d M Y, H:i').' WIB',
+                'workflow_id' => 'WF-'.$report->kode_laporan,
             ],
         ]);
     }

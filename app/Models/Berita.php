@@ -20,6 +20,7 @@ class Berita extends Model
         'seo_title',
         'seo_description',
         'seo_keywords',
+        'icon',
         'published_at',
     ];
 

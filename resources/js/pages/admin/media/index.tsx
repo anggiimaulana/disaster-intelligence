@@ -135,7 +135,7 @@ export default function MediaIndex({ media, folders }: PageProps) {
                     <button onClick={() => fileInputRef.current?.click()} className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700">Upload file pertama</button>
                 </div>
             ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
                     {filteredMedia.map((item) => (
                         <div key={item.id} onClick={() => setSelectedMedia(item)} className="group cursor-pointer rounded-xl border border-slate-200 bg-white p-2 shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
                             <div className="aspect-square overflow-hidden rounded-lg bg-slate-100">

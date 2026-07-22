@@ -113,7 +113,7 @@ class PeringatanController extends Controller
                     'level_warning' => $a->level_warning,
                     'pesan' => $a->pesan,
                     'judul' => $a->pesan ?? $a->wilayah,
-                    'wilayah' => $a->laporan?->kecamatan ?? $a->wilayah,
+                    'wilayah' => $a->wilayah ?: ($a->laporan?->kecamatan ?? 'Tidak diketahui'),
                     'tingkat' => $this->mapWarningLevel($a->level_warning),
                     'waktu_dibuat' => $a->created_at->format('d M Y, H:i'),
                     'status' => $a->status === 'aktif' ? 'Aktif' : 'Selesai',
