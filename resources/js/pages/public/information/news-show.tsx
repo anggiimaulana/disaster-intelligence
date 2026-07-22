@@ -31,19 +31,19 @@ export default function NewsShowPage({ isSimulation, slug, article, relatedArtic
                         <article className="lg:col-span-2">
                             {/* Article Header */}
                             <div className="mb-8">
-                                <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-premium-caption mb-4 uppercase tracking-wider">
-                                    <span className="flex items-center gap-1.5 text-premium-blue-accent bg-premium-blue-accent/10 px-3 py-1 rounded-full">
-                                        <Calendar className="h-3.5 w-3.5" />
+                                <div className="flex flex-wrap items-center gap-2 lg:gap-3 text-[10px] sm:text-xs font-bold text-premium-caption mb-4 uppercase tracking-wider">
+                                    <span className="flex items-center gap-1.5 text-premium-blue-accent bg-premium-blue-accent/10 px-2.5 py-1 lg:px-3 rounded-full">
+                                        <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                         {new Date(article.publishedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                                     </span>
                                     {article.tags?.map((tag) => (
-                                        <span key={tag} className="flex items-center gap-1 bg-white border border-premium-border px-3 py-1 rounded-full text-premium-body shadow-sm">
-                                            <Tag className="h-3.5 w-3.5" />
+                                        <span key={tag} className="flex items-center gap-1 bg-white border border-premium-border px-2.5 py-1 lg:px-3 rounded-full text-premium-body shadow-sm">
+                                            <Tag className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                             {tag}
                                         </span>
                                     ))}
                                 </div>
-                                <h1 className="text-3xl lg:text-4xl font-bold text-premium-heading mb-6 font-heading leading-tight tracking-tight">
+                                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-premium-heading mb-6 font-heading leading-tight tracking-tight">
                                     {article.title}
                                 </h1>
                             </div>
