@@ -20,19 +20,30 @@ class SettingsController extends Controller
         'integration_wa_config_url', 'integration_n8n_config_url',
         'integration_ai_config_url', 'integration_email_config_url',
         'integration_sms_config_url',
+        'n8n_webhook_url', 'n8n_api_key', 'n8n_trigger_on_report',
+        'n8n_trigger_on_validation', 'n8n_trigger_on_alert',
 
         'ai_provider', 'ai_base_url', 'ai_model', 'ai_api_key',
         'ai_min_confidence', 'ai_auto_classification', 'ai_auto_location',
 
         'map_default_zoom', 'map_layer_risiko', 'map_cluster_marker',
         'map_center_lat', 'map_center_lng',
+        'alert_radius_km', 'alert_auto_broadcast', 'alert_threshold',
 
         'security_2fa_enabled', 'security_2fa_methods',
+        'security_rate_limit', 'security_session_lifetime',
+        'security_max_file_size', 'security_ip_whitelist',
+        'password_min_length', 'password_require_case',
+        'password_require_numbers', 'password_require_symbols',
+        'password_force_change_days', 'session_timeout_minutes',
+        'login_max_attempts',
 
         'whatsapp_number', 'whatsapp_api_url', 'whatsapp_api_key',
         'call_center', 'email_pengaduan', 'alamat_kantor',
         'latitude_kantor', 'longitude_kantor', 'waktu_tanggap_darurat',
         'kabupaten_default', 'provinsi',
+
+        'risk_thresholds', 'notif_channels', 'n8n_endpoints',
     ];
 
     private const FILE_KEYS = [
@@ -105,7 +116,7 @@ class SettingsController extends Controller
     /**
      * Delete an item from a JSON array in settings (useful for n8n webhooks).
      */
-    public function destroyArrayItem(Request $request, $key)
+    public function destroyArrayItem(Request $request, string $key)
     {
         // Only allow deletion from whitelisted array settings.
         if (! in_array($key, ['n8n_endpoints'], true)) {
