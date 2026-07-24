@@ -13,6 +13,7 @@ use App\Models\LaporanBencana;
 use App\Models\ValidasiLaporan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -107,7 +108,12 @@ class ValidasiController extends Controller
             'mlPredictions',
             'nlpAnalysis',
             'wilayah:id,provinsi,kabupaten,kecamatan,desa',
-        ])->findOrFail($id);
+        ])->where(function ($q) use ($id) {
+            $q->where('kode_laporan', $id);
+            if (is_numeric($id)) {
+                $q->orWhere('id', (int) $id);
+            }
+        })->firstOrFail();
 
         return Inertia::render('disaster/validation/show', [
             'laporan' => $laporan,
@@ -121,7 +127,7 @@ class ValidasiController extends Controller
     public function validate(ValidasiStoreRequest $request, string $id)
     {
         // Rate limiting
-        $key = 'validasi:'.auth()->id();
+        $key = 'validasi:'.Auth::id();
         if (RateLimiter::tooManyAttempts($key, 30)) {
             return back()->withErrors(['rate' => 'Terlalu banyak validasi. Silakan tunggu sebentar.']);
         }
@@ -140,7 +146,7 @@ class ValidasiController extends Controller
 
             $validasi = ValidasiLaporan::create([
                 'laporan_id' => $laporan->id,
-                'admin_id' => auth()->id(),
+                'admin_id' => Auth::id(),
                 'hasil_validasi' => $validated['hasil_validasi'],
                 'catatan' => $validated['catatan'] ?? null,
             ]);
@@ -157,7 +163,7 @@ class ValidasiController extends Controller
             ]);
 
             AuditLog::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'action' => 'VALIDATE_REPORT',
                 'table_name' => 'laporan_bencana',
                 'record_id' => $laporan->id,
@@ -184,7 +190,7 @@ class ValidasiController extends Controller
                     'jenis_bencana' => $laporan->jenisBencana?->nama_bencana,
                     'alamat' => $laporan->alamat,
                     'status' => $laporan->status?->nama_status,
-                    'admin_id' => auth()->id(),
+                    'admin_id' => Auth::id(),
                 ]);
             }
 
@@ -194,7 +200,7 @@ class ValidasiController extends Controller
                 'laporan_id' => $laporan->id,
                 'kode_laporan' => $laporan->kode_laporan,
                 'hasil' => $validated['hasil_validasi'],
-                'admin_id' => auth()->id(),
+                'admin_id' => Auth::id(),
             ]);
 
             return back()->with('success', 'Validasi berhasil disimpan.');
@@ -204,7 +210,7 @@ class ValidasiController extends Controller
             Log::error('Failed to validate report', [
                 'laporan_id' => $laporan->id,
                 'error' => $e->getMessage(),
-                'admin_id' => auth()->id(),
+                'admin_id' => Auth::id(),
             ]);
 
             return back()->withErrors(['general' => 'Terjadi kesalahan saat menyimpan validasi.']);
@@ -229,7 +235,7 @@ class ValidasiController extends Controller
 
         // Log the action
         AuditLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'action' => 'UPDATE_STATUS',
             'table_name' => 'laporan_bencana',
             'record_id' => $laporan->id,

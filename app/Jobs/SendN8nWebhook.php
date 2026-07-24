@@ -33,37 +33,68 @@ class SendN8nWebhook implements ShouldQueue
      */
     public function handle(): void
     {
-        $setting = Setting::where('key', 'n8n_endpoints')->first();
-        if (! $setting || empty($setting->value)) {
+        $settings = Setting::whereIn('key', [
+            'integration_n8n_enabled', 'n8n_webhook_url', 'n8n_api_key',
+            'n8n_trigger_on_report', 'n8n_trigger_on_validation', 'n8n_trigger_on_alert',
+            'n8n_endpoints',
+        ])->pluck('value', 'key');
+
+        $isEnabled = (string) ($settings['integration_n8n_enabled'] ?? '1') === '1' || ($settings['integration_n8n_enabled'] ?? false) === true;
+        if (! $isEnabled) {
             return;
         }
 
-        $endpoints = $setting->value;
-
-        // If the array is JSON encoded, it will be decoded automatically due to accessor
-        if (is_string($endpoints)) {
-            $endpoints = json_decode($endpoints, true);
+        // Check trigger condition
+        if ($this->triggerEvent === 'report_created' && isset($settings['n8n_trigger_on_report']) && (string) $settings['n8n_trigger_on_report'] === '0') {
+            return;
         }
-
-        if (! is_array($endpoints)) {
+        if ($this->triggerEvent === 'report_validated' && isset($settings['n8n_trigger_on_validation']) && (string) $settings['n8n_trigger_on_validation'] === '0') {
+            return;
+        }
+        if ($this->triggerEvent === 'alert_created' && isset($settings['n8n_trigger_on_alert']) && (string) $settings['n8n_trigger_on_alert'] === '0') {
             return;
         }
 
-        foreach ($endpoints as $endpoint) {
-            $url = $endpoint['url'] ?? null;
-            if (! $url) {
-                continue;
+        $urls = [];
+        if (! empty($settings['n8n_webhook_url'])) {
+            $urls[] = $settings['n8n_webhook_url'];
+        }
+
+        if (! empty($settings['n8n_endpoints'])) {
+            $endpoints = is_string($settings['n8n_endpoints']) ? json_decode($settings['n8n_endpoints'], true) : $settings['n8n_endpoints'];
+            if (is_array($endpoints)) {
+                foreach ($endpoints as $ep) {
+                    if (! empty($ep['url'])) {
+                        $urls[] = $ep['url'];
+                    }
+                }
             }
+        }
 
+        $urls = array_unique(array_filter($urls));
+
+        if (empty($urls)) {
+            return;
+        }
+
+        $apiKey = $settings['n8n_api_key'] ?? null;
+
+        foreach ($urls as $url) {
             try {
-                $response = Http::timeout(10)
+                $req = Http::timeout(10)
                     ->withHeaders([
                         'X-Trigger-Event' => $this->triggerEvent,
-                    ])
-                    ->post($url, array_merge([
-                        'event' => $this->triggerEvent,
-                        'timestamp' => now()->toIso8601String(),
-                    ], $this->payload));
+                        'Content-Type' => 'application/json',
+                    ]);
+
+                if ($apiKey) {
+                    $req->withHeaders(['X-N8N-API-KEY' => $apiKey]);
+                }
+
+                $response = $req->post($url, array_merge([
+                    'event' => $this->triggerEvent,
+                    'timestamp' => now()->toIso8601String(),
+                ], $this->payload));
 
                 if ($response->failed()) {
                     Log::warning("n8n webhook failed for {$this->triggerEvent}", [

@@ -29,7 +29,7 @@ export function LatestReports({ reports }: { reports: ReportSummary[] }) {
 
             <div className="flex-1 divide-y divide-slate-100 overflow-y-auto">
                 {reports.map((report) => (
-                    <Link key={report.id} href={`/cms/incidents/${report.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50">
+                    <Link key={report.id} href={`/cms/incidents/${report.laporan_id || report.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50">
                         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50">
                             <FileText className="h-4 w-4 text-blue-600" />
                         </div>

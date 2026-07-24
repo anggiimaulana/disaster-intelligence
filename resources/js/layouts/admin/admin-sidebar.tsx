@@ -75,7 +75,7 @@ const navGroups: NavGroup[] = [
                     { label: 'Peringatan & Peta', href: '/cms/settings/system?tab=peringatan' },
                     { label: 'AI & Analitik', href: '/cms/settings/system?tab=ai' },
                     { label: 'Integrasi Sistem', href: '/cms/settings/system?tab=integrasi' },
-                    { label: 'Pengguna & Akses', href: '/cms/settings/system?tab=pengguna' },
+
                     { label: 'Keamanan', href: '/cms/settings/system?tab=keamanan' },
                     { label: 'Environment (.env)', href: '/cms/settings/env' },
                     { label: 'Role & Hak Akses', href: '/cms/roles' },

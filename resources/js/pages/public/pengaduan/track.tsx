@@ -275,6 +275,8 @@ export default function TrackReport() {
     // Show not found state
     if (notFound) {
         return (
+            <>
+            <Head title="Lacak Laporan - Disaster Intelligence" />
             <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
                 <div className="max-w-lg mx-auto">
                     <div className="text-center mb-8">
@@ -329,12 +331,15 @@ export default function TrackReport() {
                     </div>
                 </div>
             </div>
+            </>
         );
     }
 
     // Show initial search state
     if (!laporan) {
         return (
+            <>
+            <Head title="Lacak Laporan - Disaster Intelligence" />
             <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
                 <div className="max-w-lg mx-auto">
                     <div className="text-center mb-8">
@@ -379,6 +384,7 @@ export default function TrackReport() {
                     </div>
                 </div>
             </div>
+            </>
         );
     }
 

@@ -37,7 +37,7 @@ export default function MapPreviewCard({ markerCount, markers = [], mapSettings 
                                 Lihat peta interaktif sebaran bencana terkini.
                                 Filter berdasarkan jenis, tingkat risiko, dan wilayah.
                             </p>
-                            <div className="flex items-center gap-2 text-sm text-[#4B5563] mb-6">
+                            <div className="flex items-center gap-1.5 text-sm text-[#4B5563] mb-6">
                                 <span className="font-semibold text-[#003366]">{markerCount} titik</span>
                                 <span>kejadian terpantau saat ini</span>
                             </div>

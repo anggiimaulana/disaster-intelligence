@@ -106,12 +106,12 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
 
     // Incidents (Data Kejadian)
     Route::get('incidents', [KejadianController::class, 'index'])->name('incidents.index');
+    Route::get('incidents/export', [KejadianController::class, 'export'])->name('incidents.export');
     Route::get('incidents/{laporan}', [KejadianController::class, 'show'])->name('incidents.show');
     Route::get('incidents/{laporan}/pdf', [KejadianController::class, 'exportReportPdf'])->name('incidents.show.pdf');
-    Route::get('incidents/export', [KejadianController::class, 'export'])->name('incidents.export');
 
     // Analysis (Analisis AI)
-    Route::get('analysis', fn () => Inertia::render('disaster/analysis'))->name('analysis.index');
+    Route::get('analysis', [AnalisisController::class, 'index'])->name('analysis.index');
     Route::get('incidents/{incident}/analysis', [AnalisisController::class, 'show'])->name('analysis.show');
 
     // Validation (Validasi)

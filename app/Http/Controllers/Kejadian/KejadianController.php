@@ -219,7 +219,12 @@ class KejadianController extends Controller
             'nlpAnalysis',
             'wilayah:id,provinsi,kabupaten,kecamatan,desa',
             'whatsappMessage',
-        ])->where('kode_laporan', $laporanId)->firstOrFail();
+        ])->where(function ($q) use ($laporanId) {
+            $q->where('kode_laporan', $laporanId);
+            if (is_numeric($laporanId)) {
+                $q->orWhere('id', (int) $laporanId);
+            }
+        })->firstOrFail();
 
         // Get workflow log if exists
         $workflowLogs = $report->workflowLogs()
@@ -254,11 +259,11 @@ class KejadianController extends Controller
                 'kecamatan' => $report->kecamatan,
                 'koordinat' => ['lat' => (float) $report->latitude, 'lng' => (float) $report->longitude],
                 'deskripsi' => $report->deskripsi,
-                'pelapor' => $this->maskPhone($report->whatsappMessage?->from ?? 'N/A'),
+                'pelapor' => $report->nama_pelapor ? ($report->nama_pelapor.($report->no_hp_pelapor ? ' ('.$report->no_hp_pelapor.')' : '')) : $this->maskPhone($report->whatsappMessage?->from ?? 'N/A'),
                 'sumber' => strtoupper($report->sumber_data ?? 'WEBSITE'),
                 'id_pesan' => $report->whatsapp_message_id,
                 'diterima_pada' => $report->created_at->toIso8601String(),
-                'foto' => $report->media->map(fn ($m) => $m->file_url)->toArray(),
+                'foto' => $report->media->map(fn ($m) => str_starts_with($m->file_url, '/storage/') || str_starts_with($m->file_url, 'http') ? $m->file_url : '/storage/'.$m->file_url)->toArray(),
                 'foto_count' => $report->media->count(),
                 'ai_ringkasan' => [
                     'prediksi_jenis' => [
@@ -294,7 +299,12 @@ class KejadianController extends Controller
             'jenisBencana:id,kode,nama_bencana,warna',
             'status:id,nama_status,warna',
             'wilayah:id,provinsi,kabupaten,kecamatan,desa',
-        ])->where('kode_laporan', $laporanId)->firstOrFail();
+        ])->where(function ($q) use ($laporanId) {
+            $q->where('kode_laporan', $laporanId);
+            if (is_numeric($laporanId)) {
+                $q->orWhere('id', (int) $laporanId);
+            }
+        })->firstOrFail();
 
         $pdf = Pdf::loadView('pdf.laporan', ['laporan' => $report]);
 
@@ -303,7 +313,10 @@ class KejadianController extends Controller
 
     public function export(Request $request): HttpResponse
     {
-        $format = $request->input('format', 'excel');
+        $format = strtolower(trim($request->input('format', 'excel')));
+        if (str_contains($format, 'excel')) {
+            $format = 'excel';
+        }
 
         $query = LaporanBencana::query()
             ->with(['jenisBencana:id,kode,nama_bencana', 'status:id,nama_status']);

@@ -13,19 +13,23 @@ class DisasterMapController extends Controller
 {
     public function index()
     {
-        // Get valid reports (status diproses (2), warning (3), darurat (4), selesai (5))
-        $reports = LaporanBencana::with(['jenisBencana:id,kode,nama_bencana', 'status:id,nama_status'])
-            ->whereIn('status_id', [2, 3, 4, 5])
+        // Get valid and pending reports (status 1-5, excluding ditolak/6)
+        $reports = LaporanBencana::with(['jenisBencana:id,kode,nama_bencana', 'status:id,nama_status', 'wilayah:id,latitude,longitude'])
+            ->whereIn('status_id', [1, 2, 3, 4, 5])
             ->get()
             ->map(function ($l) {
+                $lat = (float) ($l->latitude ?? $l->wilayah?->latitude ?? 0);
+                $lng = (float) ($l->longitude ?? $l->wilayah?->longitude ?? 0);
+
                 return [
                     'id' => (string) $l->id,
-                    'lat' => (float) $l->latitude,
-                    'lng' => (float) $l->longitude,
+                    'lat' => $lat,
+                    'lng' => $lng,
                     'type' => $l->jenisBencana?->kode ?? 'LAINNYA',
                     'title' => $l->judul,
                     'location' => $l->alamat,
-                    'status' => 'valid_report',
+                    'status' => $l->status_id === 1 ? 'pending_report' : 'valid_report',
+                    'status_name' => $l->status?->nama_status ?? 'Menunggu',
                     'timestamp' => $l->created_at->format('Y-m-d H:i:s'),
                 ];
             })
@@ -38,18 +42,17 @@ class DisasterMapController extends Controller
             ->map(function ($a) {
                 return [
                     'id' => 'alert_'.$a->id,
-                    'lat' => (float) ($a->laporan->latitude ?? 0),
-                    'lng' => (float) ($a->laporan->longitude ?? 0),
+                    'lat' => (float) ($a->laporan?->latitude ?? 0),
+                    'lng' => (float) ($a->laporan?->longitude ?? 0),
                     'type' => $a->jenisBencana?->kode ?? 'LAINNYA',
                     'title' => $a->pesan ?? 'Peringatan Dini',
-                    'location' => $a->laporan->alamat ?? $a->wilayah,
+                    'location' => $a->laporan?->alamat ?? $a->wilayah,
                     'status' => 'active_alert',
                     'timestamp' => $a->created_at->format('Y-m-d H:i:s'),
                 ];
-            })
-            ->filter(fn ($m) => $m['lat'] !== 0.0 && $m['lng'] !== 0.0);
+            });
 
-        $markers = $reports->concat($alerts)->values()->toArray();
+        $markers = $reports->concat($alerts->filter(fn ($m) => $m['lat'] !== 0.0 && $m['lng'] !== 0.0))->values()->toArray();
 
         // Get settings
         $settings = Setting::whereIn('key', ['map_default_zoom', 'map_layer_risiko', 'map_cluster_marker'])->pluck('value', 'key');

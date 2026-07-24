@@ -72,7 +72,7 @@ export default function ValidationShow({ laporan }: { laporan: Laporan }) {
                                 {laporan.media.map((m) => (
                                     <div key={m.id} className="rounded-lg border border-slate-200 overflow-hidden">
                                         {m.media_type === 'image' ? (
-                                            <img src={`/storage/${m.file_url}`} alt="" className="w-full h-40 object-cover" />
+                                            <img src={m.file_url.startsWith('http') || m.file_url.startsWith('/storage') ? m.file_url : `/storage/${m.file_url}`} alt="Media Laporan" className="w-full h-40 object-cover hover:scale-105 transition-transform" />
                                         ) : (
                                             <div className="flex h-40 items-center justify-center bg-slate-100 text-slate-400 text-sm">Video</div>
                                         )}

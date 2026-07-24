@@ -64,8 +64,13 @@ class PengaduanController extends Controller
 
             $kode = LaporanBencana::generateKode();
 
+            $lat = ! empty($validated['latitude']) ? $validated['latitude'] : ($wilayah?->latitude ?? null);
+            $lng = ! empty($validated['longitude']) ? $validated['longitude'] : ($wilayah?->longitude ?? null);
+
             $laporan = LaporanBencana::create([
                 'kode_laporan' => $kode,
+                'nama_pelapor' => $validated['nama_pelapor'],
+                'no_hp_pelapor' => $validated['no_hp'],
                 'jenis_bencana_id' => $validated['jenis_bencana_id'],
                 'status_id' => 1,
                 'wilayah_id' => $wilayah?->id,
@@ -74,8 +79,8 @@ class PengaduanController extends Controller
                 'alamat' => $validated['alamat'],
                 'kecamatan' => $validated['kecamatan'],
                 'desa' => $validated['desa'] ?? null,
-                'latitude' => $validated['latitude'] ?? null,
-                'longitude' => $validated['longitude'] ?? null,
+                'latitude' => $lat,
+                'longitude' => $lng,
                 'tingkat_keparahan' => $this->calculateSeverity($validated['jenis_bencana_id'], $validated['deskripsi']),
                 'sumber_data' => 'website',
                 'waktu_kejadian' => $validated['waktu_kejadian'] ?? now(),
@@ -86,13 +91,6 @@ class PengaduanController extends Controller
             }
 
             $this->storeReporterInfo($laporan, $validated);
-
-            $reporterData = [
-                'nama' => $validated['nama_pelapor'],
-                'no_hp' => $validated['no_hp'],
-                'email' => $validated['email'] ?? null,
-            ];
-            $laporan->update(['deskripsi' => $validated['deskripsi']."\n\n[Pelapor: ".json_encode($reporterData).']']);
 
             DB::commit();
 

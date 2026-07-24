@@ -7,7 +7,6 @@ import TabUmum from './settings-components/TabUmum';
 import TabIntegrasi from './settings-components/TabIntegrasi';
 import TabPeringatan from './settings-components/TabPeringatan';
 import TabAI from './settings-components/TabAI';
-import TabPengguna from './settings-components/TabPengguna';
 import TabKeamanan from './settings-components/TabKeamanan';
 
 const menuItems = [
@@ -15,20 +14,25 @@ const menuItems = [
     { id: 'peringatan', label: 'Peringatan & Peta' },
     { id: 'ai', label: 'AI & Analitik' },
     { id: 'integrasi', label: 'Integrasi Sistem' },
-    { id: 'pengguna', label: 'Pengguna & Akses' },
     { id: 'keamanan', label: 'Keamanan' },
 ];
 
 export default function SettingsPage({ appSettings }: any) {
     const { url } = usePage();
     const searchParams = new URLSearchParams(url.split('?')[1] || '');
-    const initialTab = searchParams.get('tab') || 'umum';
+    const rawTab = searchParams.get('tab') || 'umum';
+    const initialTab = rawTab === 'pengguna' ? 'umum' : rawTab;
 
     const [activeTab, setActiveTab] = useState(initialTab);
 
     useEffect(() => {
         const tab = new URLSearchParams(url.split('?')[1] || '').get('tab');
-        if (tab && tab !== activeTab) setActiveTab(tab);
+        if (tab === 'pengguna') {
+            setActiveTab('umum');
+            router.visit('/cms/settings/system?tab=umum', { replace: true });
+        } else if (tab && tab !== activeTab) {
+            setActiveTab(tab);
+        }
     }, [url]);
 
     const switchTab = (id: string) => {
@@ -71,7 +75,6 @@ export default function SettingsPage({ appSettings }: any) {
                     {activeTab === 'peringatan' && <TabPeringatan appSettings={appSettings || {}} />}
                     {activeTab === 'ai' && <TabAI appSettings={appSettings || {}} />}
                     {activeTab === 'integrasi' && <TabIntegrasi appSettings={appSettings || {}} />}
-                    {activeTab === 'pengguna' && <TabPengguna />}
                     {activeTab === 'keamanan' && <TabKeamanan appSettings={appSettings || {}} />}
                 </div>
             </div>
